@@ -11,14 +11,16 @@ from decimal import Decimal
 from pathlib import Path
 import mysql.connector
 from mysql.connector import Error as MySQLError
-from api.config import Config
+from config.config import Config
 
 _engine = None  # "MySQL" o "SQLite"
 _mysql_available = None
+_mysql_error = None
 
 
 def test_mysql_connection():
     """Prueba si el servidor MySQL esta activo y accesible."""
+    global _mysql_error
     try:
         conn = mysql.connector.connect(
             host=Config.DB_HOST,
@@ -31,9 +33,15 @@ def test_mysql_connection():
         )
         if conn.is_connected():
             conn.close()
+            _mysql_error = None
             return True
+        _mysql_error = "El servidor MySQL no confirmo la conexion."
         return False
-    except Exception:
+    except MySQLError as err:
+        _mysql_error = str(err)
+        return False
+    except Exception as err:
+        _mysql_error = str(err)
         return False
 
 
@@ -49,9 +57,18 @@ def get_engine():
     else:
         _engine = "SQLite"
         _mysql_available = False
+        import logging
+        logging.getLogger(__name__).warning(
+            "MySQL no disponible; usando SQLite local. Motivo: %s", _mysql_error
+        )
         init_sqlite_from_csv()
 
     return _engine
+
+
+def get_mysql_error():
+    """Retorna el motivo de la ultima falla de conexion MySQL, si existe."""
+    return _mysql_error
 
 
 def get_mysql_connection():

@@ -5,17 +5,13 @@ __pycache__/
 *.pyo
 
 # Entorno virtual
-api/.venv/
 .venv/
 venv/
 env/
 
 # Variables de entorno con credenciales
-api/.env
 .env
-api/.env.*
 .env.*
-!api/.env.example
 !.env.example
 
 # Base de datos SQLite local (generada automaticamente)

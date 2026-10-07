@@ -1,34 +1,30 @@
 """
 Amazon Tech Products - API RESTful
 Arquitectura Modelo-Vista-Controlador (MVC) en 3 Capas
-Ejecutar: python api/app.py
+Ejecutar: python app.py
 """
 
-import sys
 from pathlib import Path
 from flask import Flask, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 
-# Asegurar path de importacion
-ROOT_DIR = Path(__file__).resolve().parent.parent
-if str(ROOT_DIR) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR))
+ROOT_DIR = Path(__file__).resolve().parent
 
-from api.config import Config
-from api.controllers.productos_controller import productos_bp
-from api.controllers.marcas_controller import marcas_bp
-from api.controllers.categorias_controller import categorias_bp
-from api.controllers.estadisticas_controller import estadisticas_bp
-from api.controllers.salud_controller import salud_bp
-from api.models.database import get_engine
+from config.config import Config
+from controllers.productos_controller import productos_bp
+from controllers.marcas_controller import marcas_bp
+from controllers.categorias_controller import categorias_bp
+from controllers.estadisticas_controller import estadisticas_bp
+from controllers.salud_controller import salud_bp
+from models.database import get_engine
 
 
 def create_app():
     """Fabrica de la aplicacion Flask."""
     app = Flask(
         __name__,
-        template_folder=str(ROOT_DIR / "api" / "templates"),
-        static_folder=str(ROOT_DIR / "api" / "static"),
+        template_folder=str(ROOT_DIR / "templates"),
+        static_folder=str(ROOT_DIR / "static"),
     )
 
     # 1. Habilitar CORS

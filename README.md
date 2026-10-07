@@ -11,37 +11,18 @@ El codigo se encuentra estrictamente organizado para separar responsabilidades y
 ```text
 ecommerce/
 |
++-- app.py                             # Inicializador y servidor Flask
++-- .env.example                       # Plantilla de configuracion (sin secretos)
++-- requirements.txt                   # Dependencias Python
++-- config/
+|   +-- config.py                      # Configuracion y variables .env
++-- controllers/                       # Rutas HTTP y Blueprints
++-- models/                            # Acceso a datos y consultas SQL
++-- services/                          # Reglas de negocio
++-- templates/                         # Vistas HTML renderizadas por Flask
++-- static/                            # JavaScript y estilos del frontend
 +-- conjunto_datos/
 |   +-- amazon_tech_products_ecommerceGKALI.csv # Dataset fuente
-|
-+-- api/                               # Capa de Backend (API RESTful)
-|   +-- app.py                         # Inicializador y servidor Flask (Factory Pattern)
-|   +-- config.py                      # Gestion centralizada de configuracion y variables .env
-|   +-- .env.example                   # Plantilla de configuracion (sin secretos)
-|   +-- templates/                     # Vistas HTML renderizadas por Flask
-|   |   +-- index.html
-|   +-- static/                        # Recursos del frontend
-|       +-- app.js
-|       +-- styles.css
-|   +-- requirements.txt               # Dependencias Python
-|   +-- controllers/                   # Controladores (Rutas HTTP y Blueprints)
-|   |   +-- __init__.py
-|   |   +-- productos_controller.py
-|   |   +-- marcas_controller.py
-|   |   +-- categorias_controller.py
-|   |   +-- estadisticas_controller.py
-|   |   +-- salud_controller.py
-|   +-- services/                      # Servicios (Reglas de negocio y validaciones)
-|   |   +-- __init__.py
-|   |   +-- producto_service.py
-|   |   +-- catalogo_service.py
-|   +-- models/                        # Capa de Acceso a Datos (Modelos y consultas SQL)
-|       +-- __init__.py
-|       +-- database.py                # Conector unificado (MySQL / contingencia local)
-|       +-- producto_model.py
-|       +-- marca_model.py
-|       +-- categoria_model.py
-|       +-- estadisticas_model.py
 |
 +-- database/                          # Scripts de Base de Datos y Pipeline ETL
 |   +-- schema.sql                     # DDL de creacion de tablas y restricciones en MySQL
@@ -61,9 +42,9 @@ ecommerce/
 
 ### 1. Blueprint Arquitectonico y Separacion de 3 Capas
 - **Capa de Presentacion (Frontend):** `index.html`, `styles.css` y `app.js`. Consume la API mediante llamadas asincronas (`fetch`). Cuenta con control de estados (carga, resultados, modal y badge de conexion).
-- **Capa de Controladores:** Ubicada en `api/controllers/`. Recibe las peticiones HTTP, extrae parametros, delega a los servicios correspondientes y responde codigos de estado estandarizados (200, 201, 400, 404, 500).
-- **Capa de Logica y Servicios:** Ubicada en `api/services/`. Valida tipos de datos, restringe precios negativos o inventarios invalidos, y aplica ordenamientos dinamicos.
-- **Capa de Modelos y Datos:** Ubicada en `api/models/`. Ejecuta sentencias SQL parametrizadas para evitar inyeccion SQL.
+- **Capa de Controladores:** Ubicada en `controllers/`. Recibe las peticiones HTTP, extrae parametros, delega a los servicios correspondientes y responde codigos de estado estandarizados (200, 201, 400, 404, 500).
+- **Capa de Logica y Servicios:** Ubicada en `services/`. Valida tipos de datos, restringe precios negativos o inventarios invalidos, y aplica ordenamientos dinamicos.
+- **Capa de Modelos y Datos:** Ubicada en `models/`. Ejecuta sentencias SQL parametrizadas para evitar inyeccion SQL.
 
 ### 2. Tabla de Endpoints y Contrato de la API (/api/v1)
 
@@ -140,16 +121,16 @@ erDiagram
 
 Windows (PowerShell):
 ```powershell
-python -m venv api/.venv
-api/.venv/Scripts/Activate.ps1
-python -m pip install -r api/requirements.txt
+python -m venv .venv
+.venv/Scripts/Activate.ps1
+python -m pip install -r requirements.txt
 ```
 
 Linux/macOS:
 ```bash
-python3 -m venv api/.venv
-source api/.venv/bin/activate
-python -m pip install -r api/requirements.txt
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 ```
 
 ### Paso 1: Configurar la Base de Datos en MySQL
@@ -160,16 +141,16 @@ mysql -u root -p < database/schema.sql
 
 ### Paso 2: Configurar el entorno
 
-Crea el archivo local de variables a partir de la plantilla y ajusta tus credenciales de MySQL. Este archivo esta ignorado por Git y no debe publicarse.
+Crea el archivo local de variables a partir de la plantilla y coloca credenciales validas de MySQL. Este archivo esta ignorado por Git y no debe publicarse. Sin credenciales validas, la aplicacion usa SQLite e informa el motivo en `/api/v1/salud`.
 
 Windows (PowerShell):
 ```powershell
-Copy-Item api/.env.example api/.env
+Copy-Item .env.example .env
 ```
 
 Linux/macOS:
 ```bash
-cp api/.env.example api/.env
+cp .env.example .env
 ```
 
 ### Paso 3: Poblar la Base de Datos (elige una opcion)
@@ -183,7 +164,7 @@ mysql -u root -p ecommerce_db < database/02_seeds.sql
 ```
 
 **Opcion B — Script Python ETL (recomendado para produccion):**
-Lee el CSV, normaliza los datos y los inserta por lotes transaccionales. Toma las credenciales de `api/.env`.
+Lee el CSV, normaliza los datos y los inserta por lotes transaccionales. Toma las credenciales de `.env`.
 ```bash
 python database/import_csv.py
 ```
@@ -192,7 +173,7 @@ python database/import_csv.py
 Usa pandas para procesar el CSV e insertar via `mysql-connector`. Util si se modifica el CSV fuente.
 ```bash
 # Requiere pandas instalado
-uv pip install pandas --python api/.venv
+uv pip install pandas --python .venv
 python database/load_data.py
 ```
 
@@ -202,15 +183,15 @@ python database/generate_inserts.py
 ```
 
 
-Las opciones B y C leen la configuracion local de `api/.env`.
+Las opciones B y C leen la configuracion local de `.env`.
 
 ### Paso 4: Iniciar la aplicacion Flask (Frontend + API)
 ```bash
 # Iniciar el servidor Flask con la vista MVC y la API REST
-python api/app.py
+python app.py
 ```
 Abre `http://localhost:5000` para la tienda. La API REST queda disponible en `http://localhost:5000/api/v1`.
-La barra superior indicara `BD: Conectada (MySQL)` confirmando la comunicacion extremo a extremo.
+La barra superior mostrara el motor activo. Consulta `/api/v1/salud` para ver el estado y el motivo de cualquier fallback a SQLite.
 
 ---
 

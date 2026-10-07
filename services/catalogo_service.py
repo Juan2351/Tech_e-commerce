@@ -3,9 +3,9 @@ Servicio de Catalogo
 Gestiona marcas, categorias y estadisticas agregadas del catalogo.
 """
 
-from api.models.marca_model import MarcaModel
-from api.models.categoria_model import CategoriaModel
-from api.models.estadisticas_model import EstadisticasModel
+from models.marca_model import MarcaModel
+from models.categoria_model import CategoriaModel
+from models.estadisticas_model import EstadisticasModel
 
 class CatalogoService:
     @staticmethod

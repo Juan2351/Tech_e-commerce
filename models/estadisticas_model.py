@@ -3,7 +3,7 @@ Modelo de Estadisticas
 Calcula indicadores de negocio globales del catalogo.
 """
 
-from api.models.database import query
+from models.database import query
 
 class EstadisticasModel:
     @staticmethod

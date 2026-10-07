@@ -3,7 +3,7 @@ Modelo de Producto
 Gestiona las operaciones CRUD y consultas SQL sobre la tabla producto.
 """
 
-from api.models.database import query
+from models.database import query
 
 class ProductoModel:
     @staticmethod

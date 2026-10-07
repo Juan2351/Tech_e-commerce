@@ -4,7 +4,7 @@ Rutas HTTP bajo el prefijo /api/v1/productos
 """
 
 from flask import Blueprint, request, jsonify
-from api.services.producto_service import ProductoService
+from services.producto_service import ProductoService
 
 productos_bp = Blueprint("productos", __name__, url_prefix="/api/v1/productos")
 

@@ -13,8 +13,8 @@ import mysql.connector
 from mysql.connector import Error
 from dotenv import load_dotenv
 
-# Cargar variables de entorno desde api/.env si existe
-env_path = Path(__file__).resolve().parent.parent / "api" / ".env"
+# Cargar variables de entorno desde el .env de la raiz si existe
+env_path = Path(__file__).resolve().parent.parent / ".env"
 if env_path.exists():
     load_dotenv(dotenv_path=env_path)
 else:
@@ -80,7 +80,7 @@ def importar():
         cur = conn.cursor()
     except Error as err:
         print(f"Error de conexion a MySQL: {err}")
-        print("Asegurate de que el servicio MySQL este en ejecucion y que las credenciales en api/.env sean correctas.")
+        print("Asegurate de que MySQL este en ejecucion y que las credenciales en .env sean correctas.")
         sys.exit(1)
 
     try:

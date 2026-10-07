@@ -7,8 +7,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Cargar .env de la carpeta api
-BASE_DIR = Path(__file__).resolve().parent
+# Cargar .env de la raiz del proyecto
+BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(dotenv_path=BASE_DIR / ".env")
 
 class Config:
@@ -27,7 +27,7 @@ class Config:
     DEBUG = FLASK_ENV == "development"
 
     # CORS
-    FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:8080")
+    FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5000")
     ALLOWED_ORIGINS = [
         FRONTEND_ORIGIN,
         "http://localhost:5500",
@@ -40,8 +40,8 @@ class Config:
 
     # Archivo CSV origen
     CSV_PATH = (
-        BASE_DIR.parent
+        BASE_DIR
         / "conjunto_datos"
         / "amazon_tech_products_ecommerceGKALI.csv"
     )
-    SQLITE_FALLBACK_PATH = BASE_DIR.parent / "database" / "ecommerce_local.db"
+    SQLITE_FALLBACK_PATH = BASE_DIR / "database" / "ecommerce_local.db"

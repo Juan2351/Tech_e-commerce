@@ -6,16 +6,16 @@ Uso (ejecutar desde la raiz del proyecto):
     python database/load_data.py
 
 Requiere: pip install pandas mysql-connector-python
-o con el entorno virtual: api/.venv/Scripts/python database/load_data.py
+o con el entorno virtual: .venv/bin/python database/load_data.py
 """
 
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Cargar credenciales desde api/.env
+# Cargar credenciales desde el .env de la raiz
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(dotenv_path=BASE_DIR / "api" / ".env")
+load_dotenv(dotenv_path=BASE_DIR / ".env")
 
 import pandas as pd
 import mysql.connector

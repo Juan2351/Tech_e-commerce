@@ -3,7 +3,7 @@ Modelo de Categoria y Subcategoria
 Gestiona operaciones SQL sobre categorias y subcategorias.
 """
 
-from api.models.database import query
+from models.database import query
 
 class CategoriaModel:
     @staticmethod

@@ -3,7 +3,7 @@ Modelo de Marca
 Gestiona operaciones SQL sobre la tabla marca.
 """
 
-from api.models.database import query
+from models.database import query
 
 class MarcaModel:
     @staticmethod

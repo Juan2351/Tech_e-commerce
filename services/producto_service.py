@@ -3,7 +3,7 @@ Servicio de Producto
 Logica de negocio, validacion de reglas y construccion de consultas para productos.
 """
 
-from api.models.producto_model import ProductoModel
+from models.producto_model import ProductoModel
 
 SORT_COLUMNS = {
     "price_asc":    "p.precio ASC",

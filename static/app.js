@@ -77,7 +77,8 @@ async function inicializarAplicacion() {
 
     const datosSalud = await resSalud.json();
     state.mode = "api";
-    actualizarBadge(true, datosSalud.base_de_datos?.motor || "SQL");
+    const motor = datosSalud.base_de_datos?.motor;
+    actualizarBadge(datosSalud.base_de_datos?.mysql_disponible === true, motor);
 
     // 2. Cargar filtros y estadisticas desde la base de datos
     await Promise.all([
@@ -95,13 +96,13 @@ async function inicializarAplicacion() {
   }
 }
 
-function actualizarBadge(conectado, motor = "SQL") {
+function actualizarBadge(conectado, motor) {
   if (!$dbBadge) return;
   if (conectado) {
     $dbBadge.textContent = `BD: Conectada (${motor})`;
     $dbBadge.className = "db-badge connected";
   } else {
-    $dbBadge.textContent = "BD: Modo Local (CSV)";
+    $dbBadge.textContent = motor ? `BD: Modo Local (${motor})` : "BD: Modo Local (CSV)";
     $dbBadge.className = "db-badge fallback";
   }
 }

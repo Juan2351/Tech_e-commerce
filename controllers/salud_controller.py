@@ -4,7 +4,7 @@ Rutas HTTP bajo el prefijo /api/v1/salud
 """
 
 from flask import Blueprint, jsonify
-from api.models.database import get_engine, query
+from models.database import get_engine, get_mysql_error, query
 
 salud_bp = Blueprint("salud", __name__, url_prefix="/api/v1/salud")
 
@@ -20,6 +20,8 @@ def check_salud():
             "base_de_datos": {
                 "conectada": bool(check),
                 "motor": motor,
+                "mysql_disponible": motor == "MySQL",
+                "detalle": get_mysql_error() if motor != "MySQL" else None,
                 "total_productos": conteo["total"] if conteo else 0
             }
         }), 200
