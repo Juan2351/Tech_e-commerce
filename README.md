@@ -1,4 +1,4 @@
-# Amazon Tech Products E-commerce
+#Tech Products E-commerce
 
 Plataforma de catalogo de productos tecnologicos basada en datos de Amazon. El sistema implementa una arquitectura desacoplada Modelo-Vista-Controlador (MVC) en 3 capas, conectando un frontend interactivo con una API RESTful en Flask y una base de datos relacional MySQL normalizada.
 
