@@ -1,25 +1,25 @@
--- DB/schema.sql
+-- Base de datos: ecommerce_db
+-- Motor: MySQL 8.0+
 
--- 1. Crear la base de datos
 CREATE DATABASE IF NOT EXISTS ecommerce_db
 CHARACTER SET utf8mb4 
 COLLATE utf8mb4_unicode_ci;
 
 USE ecommerce_db;
 
--- 2. Tabla Marca
+-- 1. Tabla Marca
 CREATE TABLE IF NOT EXISTS marca (
     id_marca INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(150) NOT NULL UNIQUE
 ) ENGINE=InnoDB;
 
--- 3. Tabla Categoria Principal
+-- 2. Tabla Categoria Principal
 CREATE TABLE IF NOT EXISTS categoria_principal (
     id_main_cat INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE
 ) ENGINE=InnoDB;
 
--- 4. Tabla Subcategoria
+-- 3. Tabla Subcategoria
 CREATE TABLE IF NOT EXISTS subcategoria (
     id_subcat INT AUTO_INCREMENT PRIMARY KEY,
     id_main_cat INT NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS subcategoria (
     CONSTRAINT uq_subcat_per_main UNIQUE (id_main_cat, nombre)
 ) ENGINE=InnoDB;
 
--- 5. Tabla Producto
+-- 4. Tabla Producto
 CREATE TABLE IF NOT EXISTS producto (
     id_producto VARCHAR(64) PRIMARY KEY,
     descripcion TEXT NOT NULL,

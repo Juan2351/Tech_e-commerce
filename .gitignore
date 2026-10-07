@@ -1,13 +1,46 @@
-# Archivos de entorno y credenciales
-.env
+# Archivos compilados de Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.pyo
 
-# Entornos virtuales
-venv/
+# Entorno virtual
+api/.venv/
 .venv/
+venv/
 env/
 
-# IDEs
+# Variables de entorno con credenciales
+api/.env
+.env
+api/.env.*
+.env.*
+!api/.env.example
+!.env.example
+
+# Base de datos SQLite local (generada automaticamente)
+database/ecommerce_local.db
+*.db
+*.sqlite3
+
+# Archivos de compilacion y caché generados
+__pycache__/
+*.py[cod]
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores e IDEs
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Archivos temporales
+*.tmp
+*.bak

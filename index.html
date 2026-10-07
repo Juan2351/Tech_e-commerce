@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Amazon Tech Products - Catalogo de Productos</title>
+  <meta name="description" content="Catalogo integral de productos tecnologicos de Amazon conectado a base de datos relacional y API REST." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <header class="site-header" role="banner">
+    <div class="header-inner container">
+      <div class="logo">
+        <span class="logo-text">TechStore</span>
+        <span class="logo-sub">Amazon Tech Catalog</span>
+      </div>
+      <nav class="header-nav" aria-label="Navegacion principal">
+        <span id="db-status-badge" class="db-badge">Base de Datos: Conectando...</span>
+        <a href="#catalog" class="nav-link">Catalogo</a>
+        <a href="#stats" class="nav-link">Estadisticas</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container">
+      <h1 id="hero-title" class="hero-title">Catalogo de Productos Tech</h1>
+      <p class="hero-subtitle">Plataforma conectada a base de datos relacional MySQL y API RESTful</p>
+      <div class="hero-stats" id="stats" aria-label="Estadisticas generales">
+        <div class="stat-card">
+          <span class="stat-number" id="stat-total">-</span>
+          <span class="stat-label">Productos</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="stat-brands">-</span>
+          <span class="stat-label">Marcas</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="stat-categories">-</span>
+          <span class="stat-label">Categorias</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="stat-avg-price">-</span>
+          <span class="stat-label">Precio Promedio</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main id="catalog" class="container main-content" role="main">
+    <section class="controls" aria-label="Filtros y busqueda">
+      <div class="search-bar">
+        <label for="search-input" class="sr-only">Buscar productos</label>
+        <span class="search-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </span>
+        <input type="search" id="search-input" class="search-input"
+          placeholder="Buscar por descripcion, marca o subcategoria..." autocomplete="off" />
+      </div>
+      <div class="filters-row">
+        <div class="filter-group">
+          <label for="filter-brand" class="filter-label">Marca</label>
+          <select id="filter-brand" class="filter-select">
+            <option value="">Todas las marcas</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filter-category" class="filter-label">Categoria</label>
+          <select id="filter-category" class="filter-select">
+            <option value="">Todas</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filter-subcategory" class="filter-label">Subcategoria</label>
+          <select id="filter-subcategory" class="filter-select">
+            <option value="">Todas</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filter-rating" class="filter-label">Rating minimo</label>
+          <select id="filter-rating" class="filter-select">
+            <option value="0">Cualquier calificacion</option>
+            <option value="3">Minimo 3.0</option>
+            <option value="4">Minimo 4.0</option>
+            <option value="4.5">Minimo 4.5</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="sort-by" class="filter-label">Ordenar por</label>
+          <select id="sort-by" class="filter-select">
+            <option value="default">Por defecto</option>
+            <option value="price-asc">Precio: menor a mayor</option>
+            <option value="price-desc">Precio: mayor a menor</option>
+            <option value="rating-desc">Mayor calificacion</option>
+            <option value="reviews-desc">Mayor numero de resenas</option>
+            <option value="stock-desc">Mayor inventario</option>
+          </select>
+        </div>
+        <button id="btn-reset" class="btn-reset" type="button">Limpiar Filtros</button>
+      </div>
+      <div class="results-info" aria-live="polite"><span id="results-count">Consultando datos...</span></div>
+    </section>
+
+    <div class="view-toggle" role="group" aria-label="Modo de vista">
+      <button id="btn-grid" class="view-btn active" type="button" aria-pressed="true">Cuadricula</button>
+      <button id="btn-table" class="view-btn" type="button" aria-pressed="false">Tabla</button>
+    </div>
+
+    <div id="loading" class="loading" role="status">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Cargando catalogo desde la base de datos...</p>
+    </div>
+
+    <section id="grid-view" class="product-grid hidden" aria-label="Productos"></section>
+
+    <section id="table-view" class="table-section hidden" aria-label="Tabla de productos">
+      <div class="table-wrapper" tabindex="0">
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th scope="col">Imagen</th>
+              <th scope="col" class="sortable" data-sort="description">Producto</th>
+              <th scope="col" class="sortable" data-sort="brand">Marca</th>
+              <th scope="col">Categoria</th>
+              <th scope="col" class="sortable" data-sort="price">Precio</th>
+              <th scope="col" class="sortable" data-sort="rating">Rating</th>
+              <th scope="col" class="sortable" data-sort="reviews">Resenas</th>
+              <th scope="col">Stock</th>
+              <th scope="col">Accion</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div id="no-results" class="no-results hidden" role="alert">
+      <p>No se encontraron productos con los criterios seleccionados.</p>
+      <button id="btn-clear-no-results" class="btn-reset" type="button">Restablecer filtros</button>
+    </div>
+
+    <nav id="pagination" class="pagination" aria-label="Paginacion" hidden>
+      <button id="btn-prev" class="page-btn" type="button" disabled>Anterior</button>
+      <div id="page-numbers" class="page-numbers" role="list"></div>
+      <button id="btn-next" class="page-btn" type="button">Siguiente</button>
+    </nav>
+    <div class="page-info" aria-live="polite">
+      <span id="page-info-text"></span>
+      <label for="page-size-select" class="sr-only">Por pagina</label>
+      <select id="page-size-select" class="page-size-select">
+        <option value="24">24 por pagina</option>
+        <option value="48">48 por pagina</option>
+        <option value="96">96 por pagina</option>
+      </select>
+    </div>
+  </main>
+
+  <dialog id="product-modal" class="product-modal" aria-modal="true" aria-labelledby="modal-title">
+    <article class="modal-content">
+      <button id="modal-close" class="modal-close" type="button" aria-label="Cerrar">&times;</button>
+      <div class="modal-body">
+        <figure class="modal-figure">
+          <img id="modal-img" src="" alt="" class="modal-img" loading="lazy" />
+        </figure>
+        <div class="modal-info">
+          <p class="modal-category" id="modal-category"></p>
+          <h2 id="modal-title" class="modal-product-title"></h2>
+          <div id="modal-rating-row" class="modal-rating"></div>
+          <p class="modal-price" id="modal-price"></p>
+          <dl class="modal-details" id="modal-details"></dl>
+          <a id="modal-link" href="#" target="_blank" rel="noopener noreferrer" class="modal-btn">Ver en Amazon</a>
+        </div>
+      </div>
+    </article>
+  </dialog>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <p>Catalogo Amazon Tech Products - Conectado a Base de Datos Relacional &middot; <span id="footer-year"></span></p>
+      <p class="footer-disclaimer">Informacion sincronizada mediante arquitectura desacoplada MVC y API RESTful.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
