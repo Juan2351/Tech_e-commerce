@@ -11,9 +11,6 @@ El codigo se encuentra estrictamente organizado para separar responsabilidades y
 ```text
 ecommerce/
 |
-+-- index.html                         # Capa de Presentacion: interfaz web
-+-- styles.css                         # Capa de Presentacion: estilos y diseno
-+-- app.js                             # Capa de Presentacion: cliente HTTP y logica DOM
 +-- conjunto_datos/
 |   +-- amazon_tech_products_ecommerceGKALI.csv # Dataset fuente
 |
@@ -21,6 +18,11 @@ ecommerce/
 |   +-- app.py                         # Inicializador y servidor Flask (Factory Pattern)
 |   +-- config.py                      # Gestion centralizada de configuracion y variables .env
 |   +-- .env.example                   # Plantilla de configuracion (sin secretos)
+|   +-- templates/                     # Vistas HTML renderizadas por Flask
+|   |   +-- index.html
+|   +-- static/                        # Recursos del frontend
+|       +-- app.js
+|       +-- styles.css
 |   +-- requirements.txt               # Dependencias Python
 |   +-- controllers/                   # Controladores (Rutas HTTP y Blueprints)
 |   |   +-- __init__.py
@@ -202,19 +204,12 @@ python database/generate_inserts.py
 
 Las opciones B y C leen la configuracion local de `api/.env`.
 
-### Paso 4: Iniciar la API REST (Backend Flask)
+### Paso 4: Iniciar la aplicacion Flask (Frontend + API)
 ```bash
-# Iniciar el servidor Flask
+# Iniciar el servidor Flask con la vista MVC y la API REST
 python api/app.py
 ```
-El servidor estara disponible en `http://localhost:5000`.
-
-### Paso 5: Iniciar la Interfaz Web (Frontend)
-En otra terminal en la raiz del proyecto:
-```bash
-python -m http.server 8080
-```
-Abre tu navegador en `http://localhost:8080`.
+Abre `http://localhost:5000` para la tienda. La API REST queda disponible en `http://localhost:5000/api/v1`.
 La barra superior indicara `BD: Conectada (MySQL)` confirmando la comunicacion extremo a extremo.
 
 ---

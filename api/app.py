@@ -6,7 +6,7 @@ Ejecutar: python api/app.py
 
 import sys
 from pathlib import Path
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 
 # Asegurar path de importacion
@@ -25,7 +25,11 @@ from api.models.database import get_engine
 
 def create_app():
     """Fabrica de la aplicacion Flask."""
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        template_folder=str(ROOT_DIR / "api" / "templates"),
+        static_folder=str(ROOT_DIR / "api" / "static"),
+    )
 
     # 1. Habilitar CORS
     CORS(app, resources={r"/api/*": {"origins": Config.ALLOWED_ORIGINS}})
@@ -40,6 +44,10 @@ def create_app():
     # 3. Ruta principal informativa
     @app.route("/", methods=["GET"])
     def index():
+        return render_template("index.html")
+
+    @app.route("/api", methods=["GET"])
+    def api_info():
         return jsonify({
             "nombre": "Amazon Tech Products REST API",
             "version": "v1",
@@ -53,6 +61,10 @@ def create_app():
                 "productos": "/api/v1/productos"
             }
         }), 200
+
+    @app.route("/conjunto_datos/<path:filename>", methods=["GET"])
+    def dataset(filename):
+        return send_from_directory(ROOT_DIR / "conjunto_datos", filename)
 
     # 4. Manejadores de errores globales
     @app.errorhandler(404)

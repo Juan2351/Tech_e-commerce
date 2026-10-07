@@ -4,7 +4,7 @@
  * Soporte dual: API REST (primario) con contingencia de carga local CSV
  */
 
-const API_BASE = "http://localhost:5000/api/v1";
+const API_BASE = "/api/v1";
 const USD_TO_COP = 4350;
 
 // Estado de la aplicacion
@@ -199,7 +199,7 @@ async function cargarProductos() {
 // -------------------------------------------------------------
 async function iniciarModoContingenciaCSV() {
   try {
-    const res = await fetch("conjunto_datos/amazon_tech_products_ecommerceGKALI.csv");
+    const res = await fetch("/conjunto_datos/amazon_tech_products_ecommerceGKALI.csv");
     if (!res.ok) throw new Error("No se pudo leer el CSV");
     const text = await res.text();
     state.allProductsFallback = parsearCSV(text);
