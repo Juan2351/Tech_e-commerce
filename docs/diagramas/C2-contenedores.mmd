@@ -1,0 +1,15 @@
+C4Container
+title C2 - Contenedores del sistema LePetit
+
+Person(cliente, "Cliente", "Navega el catálogo y actualiza el carrito.")
+System_Boundary(lepetit, "LePetit") {
+    Container(browser, "Navegador web", "HTML5, CSS y JavaScript", "Renderiza las vistas y consume la API JSON del mismo origen.")
+    Container(web, "Aplicación web", "Python 3, Flask y Jinja", "Entrega páginas HTML, expone la API REST y conecta los modelos con la base de datos.")
+    ContainerDb(mysql, "Base de datos", "MySQL 8", "Guarda productos, marcas, categorías y subcategorías.")
+}
+System_Ext(imagenes, "CDN de imágenes", "Imágenes de demostración referenciadas mediante URL HTTPS.")
+
+Rel(cliente, browser, "Usa el sitio")
+Rel(browser, web, "Solicita páginas HTML y API JSON", "HTTP local / HTTPS desplegado")
+Rel(web, mysql, "Consulta el catálogo", "SQL sobre conexión MySQL")
+Rel(browser, imagenes, "Solicita imágenes de producto", "HTTPS")

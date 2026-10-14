@@ -1,0 +1,51 @@
+classDiagram
+    class APIController {
+        +addCartProduct()
+        +changeCartProduct(productId)
+        +deleteCartProduct(productId)
+    }
+    class CartService {
+        +add_product(cart, productId, quantity)
+        +update_quantity(cart, productId, quantity)
+        +cart_summary(cart)
+    }
+    class CatalogRepository {
+        +fetch_product(productId)
+        +fetch_products_by_ids(productIds)
+    }
+    class Product {
+        +id_producto: str
+        +precio: Decimal
+        +stock: int
+        +from_row(row)
+        +to_dict(rate)
+    }
+    class DatabaseAdapter {
+        +get_db()
+        +query_one(sql, params)
+        +query_all(sql, params)
+    }
+    class BrowserJavaScript {
+        +sendCartRequest(url, method, body)
+        +updateCartCount(count)
+        +showFeedback(message)
+    }
+    class MySQL {
+        <<database>>
+        producto
+        marca
+        subcategoria
+        categoria_principal
+    }
+    class FlaskSession {
+        <<signed session cookie>>
+        cart: productId to quantity
+    }
+
+    BrowserJavaScript --> APIController : HTTPS/HTTP JSON
+    APIController --> CartService : validates requested operation
+    APIController --> FlaskSession : reads/writes cart
+    CartService --> CatalogRepository : verifies product and stock
+    CartService --> Product : uses product model
+    CatalogRepository --> DatabaseAdapter : parameterized SQL
+    DatabaseAdapter --> MySQL : MySQL protocol

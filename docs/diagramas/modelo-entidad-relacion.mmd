@@ -1,0 +1,34 @@
+erDiagram
+    marca ||--o{ producto : "posee"
+    categoria_principal ||--|{ subcategoria : "contiene"
+    subcategoria ||--o{ producto : "clasifica"
+
+    marca {
+        INT id_marca PK
+        VARCHAR nombre UK
+    }
+
+    categoria_principal {
+        INT id_main_cat PK
+        VARCHAR nombre UK
+    }
+
+    subcategoria {
+        INT id_subcat PK
+        INT id_main_cat FK
+        VARCHAR nombre
+    }
+
+    producto {
+        VARCHAR id_producto PK
+        VARCHAR nombre
+        TEXT descripcion
+        DECIMAL precio "USD base"
+        DECIMAL rating
+        INT reviews_count
+        INT stock
+        VARCHAR url
+        VARCHAR image_url
+        INT id_marca FK
+        INT id_subcat FK
+    }

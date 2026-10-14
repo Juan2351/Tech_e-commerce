@@ -1,102 +1,68 @@
-"""
-Amazon Tech Products - API RESTful
-Arquitectura Modelo-Vista-Controlador (MVC) en 3 Capas
-Ejecutar: python app.py
-"""
+from decimal import Decimal, InvalidOperation
 
-from pathlib import Path
-from flask import Flask, jsonify, render_template, send_from_directory
-from flask_cors import CORS
+from flask import Flask, jsonify, render_template, request
+from werkzeug.exceptions import HTTPException
+import mysql.connector
 
-ROOT_DIR = Path(__file__).resolve().parent
-
-from config.config import Config
-from controllers.productos_controller import productos_bp
-from controllers.marcas_controller import marcas_bp
-from controllers.categorias_controller import categorias_bp
-from controllers.estadisticas_controller import estadisticas_bp
-from controllers.salud_controller import salud_bp
-from models.database import get_engine
+from configs.settings import BASE_DIR, Config
+from controllers.api_controller import api
+from controllers.shop_controller import shop
+from models.database import DatabaseConfigurationError, close_db
 
 
-def create_app():
-    """Fabrica de la aplicacion Flask."""
+def create_app(test_config=None):
     app = Flask(
         __name__,
-        template_folder=str(ROOT_DIR / "templates"),
-        static_folder=str(ROOT_DIR / "static"),
+        template_folder=str(BASE_DIR / "templates"),
+        static_folder=str(BASE_DIR / "static"),
     )
+    app.config.from_object(Config)
+    if test_config:
+        app.config.update(test_config)
+    try:
+        exchange_rate = Decimal(str(app.config["USD_TO_COP_RATE"]))
+    except (InvalidOperation, TypeError, ValueError):
+        raise RuntimeError("USD_TO_COP_RATE debe ser una tasa numérica positiva.") from None
+    if not exchange_rate.is_finite() or exchange_rate <= 0:
+        raise RuntimeError("USD_TO_COP_RATE debe ser una tasa numérica positiva.")
+    app.config["USD_TO_COP_RATE"] = exchange_rate
 
-    # 1. Habilitar CORS
-    CORS(app, resources={r"/api/*": {"origins": Config.ALLOWED_ORIGINS}})
+    app.register_blueprint(shop)
+    app.register_blueprint(api)
+    app.teardown_appcontext(close_db)
 
-    # 2. Registrar Blueprints (Controladores)
-    app.register_blueprint(productos_bp)
-    app.register_blueprint(marcas_bp)
-    app.register_blueprint(categorias_bp)
-    app.register_blueprint(estadisticas_bp)
-    app.register_blueprint(salud_bp)
+    @app.errorhandler(HTTPException)
+    def handle_http_error(error):
+        if request.path.startswith("/api/"):
+            return jsonify({
+                "error": {
+                    "code": error.name.lower().replace(" ", "_"),
+                    "message": error.description,
+                }
+            }), error.code
+        return render_template("error.html", message=error.description), error.code
 
-    # 3. Ruta principal informativa
-    @app.route("/", methods=["GET"])
-    def index():
-        return render_template("index.html")
-
-    @app.route("/api", methods=["GET"])
-    def api_info():
-        return jsonify({
-            "nombre": "Amazon Tech Products REST API",
-            "version": "v1",
-            "arquitectura": "MVC (Modelo-Vista-Controlador)",
-            "motor_bd": get_engine(),
-            "endpoints": {
-                "salud": "/api/v1/salud",
-                "estadisticas": "/api/v1/estadisticas",
-                "marcas": "/api/v1/marcas",
-                "categorias": "/api/v1/categorias",
-                "productos": "/api/v1/productos"
-            }
-        }), 200
-
-    @app.route("/conjunto_datos/<path:filename>", methods=["GET"])
-    def dataset(filename):
-        return send_from_directory(ROOT_DIR / "conjunto_datos", filename)
-
-    # 4. Manejadores de errores globales
-    @app.errorhandler(404)
-    def no_encontrado(e):
-        return jsonify({"error": "Recurso no encontrado", "codigo": 404}), 404
-
-    @app.errorhandler(405)
-    def metodo_no_permitido(e):
-        return jsonify({"error": "Metodo HTTP no permitido", "codigo": 405}), 405
-
-    @app.errorhandler(500)
-    def error_servidor(e):
-        return jsonify({"error": "Error interno del servidor", "codigo": 500}), 500
+    @app.errorhandler(DatabaseConfigurationError)
+    @app.errorhandler(mysql.connector.Error)
+    def handle_database_error(error):
+        app.logger.exception("La operación requiere una base de datos disponible.")
+        message = "No fue posible conectar con la base de datos. Revisa la configuración."
+        if request.path.startswith("/api/"):
+            return jsonify({
+                "error": {"code": "database_unavailable", "message": message}
+            }), 503
+        return render_template("error.html", message=message), 503
 
     return app
 
 
 app = create_app()
 
-if __name__ == "__main__":
-    motor = get_engine()
-    print("=" * 60)
-    print(" Amazon Tech Products E-Commerce - API RESTful v1")
-    print(f" Arquitectura: MVC de 3 Capas")
-    print(f" Motor Activo de Base de Datos: {motor}")
-    print(f" Host: http://localhost:{Config.FLASK_PORT}")
-    print("=" * 60)
-    print(f" - Diagnostico:   GET http://localhost:{Config.FLASK_PORT}/api/v1/salud")
-    print(f" - Estadisticas:  GET http://localhost:{Config.FLASK_PORT}/api/v1/estadisticas")
-    print(f" - Marcas:        GET http://localhost:{Config.FLASK_PORT}/api/v1/marcas")
-    print(f" - Categorias:    GET http://localhost:{Config.FLASK_PORT}/api/v1/categorias")
-    print(f" - Productos:     GET http://localhost:{Config.FLASK_PORT}/api/v1/productos")
-    print("=" * 60)
 
-    app.run(
-        host=Config.FLASK_HOST,
-        port=Config.FLASK_PORT,
-        debug=Config.DEBUG
-    )
+if __name__ == "__main__":
+    cert = app.config["SSL_CERT_FILE"]
+    key = app.config["SSL_KEY_FILE"]
+    if bool(cert) != bool(key):
+        raise RuntimeError("Configura juntos SSL_CERT_FILE y SSL_KEY_FILE.")
+    ssl_context = (cert, key) if cert and key else None
+    app.run(host="127.0.0.1", port=5000, debug=True, ssl_context=ssl_context)

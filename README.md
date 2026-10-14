@@ -1,199 +1,249 @@
-Tech Products E-commerce
+# LePetit
 
-Plataforma de catalogo de productos tecnologicos basada en datos de Amazon. El sistema implementa una arquitectura desacoplada Modelo-Vista-Controlador (MVC) en 3 capas, conectando un frontend interactivo con una API RESTful en Flask y una base de datos relacional MySQL normalizada.
+LePetit es una tienda web de demostración para consultar un catálogo de productos, filtrar por categoría, revisar detalles y mantener un carrito temporal. Está organizada por MVC y capas para que las vistas, los controladores, las reglas del carrito y el acceso a MySQL no queden mezclados en un único archivo.
 
----
+## Descripción del sistema
 
-## Estructura y Organizacion del Proyecto
+- **Problema:** presentar un catálogo de comercio electrónico consultable y una interacción básica de compra sin mezclar la interfaz con las consultas de datos.
+- **Objetivo:** mostrar productos, precios en pesos colombianos (COP), marcas, categorías, stock y permitir modificar un carrito.
+- **Usuarios:** cliente visitante. No hay cuentas de usuario ni panel de administración en este prototipo.
+- **Funcionalidades implementadas:** listar, buscar y filtrar productos; ordenar por precio o calificación; consultar detalle; agregar, actualizar y quitar productos del carrito; consultar endpoints REST.
+- **Información almacenada:** productos, precio base, descripción, rating, reseñas, stock, URL de imagen, marca, categoría principal y subcategoría. El carrito se guarda temporalmente en la sesión Flask firmada.
+- **Integraciones:** MySQL para el catálogo y un CDN externo para imágenes de muestra. No se integra pasarela de pagos, autenticación, mapas, correo ni WhatsApp.
 
-El codigo se encuentra estrictamente organizado para separar responsabilidades y prevenir el antipatron de monolito:
+## Tecnologías y decisiones
+
+| Área | Tecnología | Decisión |
+|---|---|---|
+| Backend | Python 3 y Flask | Backend único ligero, dividido en controladores y servicios. |
+| Presentación | HTML5 semántico y Jinja | Las páginas se renderizan desde el servidor. |
+| Interacción del navegador | JavaScript sin framework | La API REST gestiona el carrito sin recargar la página al agregar. |
+| Estilos | CSS propio mínimo | Paleta blanca, gris y negra, adaptable a pantallas pequeñas y efectos hover discretos. |
+| Persistencia | MySQL 8 e InnoDB | Modelo relacional preparado para ejecución y consulta desde DBeaver. |
+| Acceso a datos | `mysql-connector-python` y SQL parametrizado | Evita sumar ORM al prototipo y deja visibles el DDL y las relaciones SQL. |
+| Configuración | `.env` local y `python-dotenv` | Las credenciales no se escriben en el código ni se suben al repositorio. |
+| Documentación | Mermaid y OpenAPI 3.0 | Fuentes editables para C1-C4, modelo relacional y contrato HTTP. |
+
+La lista inicial también menciona Java. No se utiliza en esta versión: se seleccionó Python/Flask como único backend para mantener un solo servidor y una arquitectura coherente. El proyecto tampoco necesita React porque Flask entrega HTML y el JavaScript consume la API en el mismo origen.
+
+Los valores `precio` del esquema y de los datos de ejemplo son precios base en USD. Se muestran en COP calculando `precio × USD_TO_COP_RATE`. La tasa por defecto es `4200`, se valida como número finito positivo y se configura manualmente en `.env`; no representa una cotización en tiempo real ni requiere una integración monetaria externa. Actualiza la tasa antes de una demostración si necesitas otra conversión.
+
+## Arquitectura MVC y árbol de carpetas
 
 ```text
-ecommerce/
-|
-+-- app.py                             # Inicializador y servidor Flask
-+-- .env.example                       # Plantilla de configuracion (sin secretos)
-+-- requirements.txt                   # Dependencias Python
-+-- config/
-|   +-- config.py                      # Configuracion y variables .env
-+-- controllers/                       # Rutas HTTP y Blueprints
-+-- models/                            # Acceso a datos y consultas SQL
-+-- services/                          # Reglas de negocio
-+-- templates/                         # Vistas HTML renderizadas por Flask
-+-- static/                            # JavaScript y estilos del frontend
-+-- conjunto_datos/
-|   +-- amazon_tech_products_ecommerceGKALI.csv # Dataset fuente
-|
-+-- database/                          # Scripts de Base de Datos y Pipeline ETL
-|   +-- schema.sql                     # DDL de creacion de tablas y restricciones en MySQL
-|   +-- 02_seeds.sql                   # Datos precargados en SQL puro (INSERT masivo)
-|   +-- import_csv.py                  # Script ETL automatizado via Python (CSV -> MySQL)
-|   +-- generate_inserts.py            # Genera 02_seeds.sql leyendo el CSV
-|   +-- load_data.py                   # Carga alternativa con pandas + mysql-connector
-|   +-- queries.sql                    # Consultas de validacion, metricas y pruebas
-|
-+-- docs/                              # Documentacion Tecnica y Diagramas
-    +-- diagramas.md                   # Diagramas MER, MVC, ETL y Secuencia (Mermaid)
+ECOMMERCELEPETIT/
+├── app.py                         # Fábrica Flask, registro de rutas y errores
+├── configs/
+│   └── settings.py                # Variables de entorno y configuración
+├── controllers/
+│   ├── api_controller.py          # Endpoints JSON versionados
+│   └── shop_controller.py         # Rutas de las páginas HTML
+├── services/
+│   └── cart_service.py            # Reglas de stock y carrito
+├── models/
+│   ├── database.py                # Conexión MySQL, consultas y cierre
+│   ├── catalog.py                 # Repositorio SQL de productos y categorías
+│   └── entities.py                # Modelo Product y serialización
+├── templates/                     # Vistas HTML Jinja
+├── static/
+│   ├── css/styles.css             # Estilos básicos gris/blanco/negro
+│   ├── js/app.js                  # Cliente JavaScript de la API del carrito
+│   └── img/product-placeholder.svg
+├── database/
+│   ├── schema.sql                 # Creación de base y tablas MySQL
+│   ├── seed.sql                   # Datos de ejemplo
+│   └── queries.sql                # Consultas para validación
+├── Diagramas/                     # Fotografías compartidas como insumo
+├── docs/
+│   ├── C4.md                      # Explicación C1-C4 y flujo principal
+│   ├── openapi.yaml               # Contrato de la API REST
+│   └── diagramas/                 # Mermaid: C1, C2, C3, C4 y ER
+├── tests/
+├── .env.example                   # Plantilla sin secretos
+├── .gitignore
+├── requirements.txt
+└── README.md
 ```
 
----
+### Separación de responsabilidades
 
-## ENTREGABLES GRUPO CHILL: Diseno de API, Arquitectura y Backend
+- **Presentación:** `templates/`, `static/css/` y `static/js/`. El CSS se mantiene intencionalmente sencillo; el JS envía operaciones de carrito al servidor.
+- **Controladores:** `controllers/`. Convierten rutas HTTP en llamadas a repositorios/servicios y devuelven HTML o JSON.
+- **Servicios:** `services/`. Contienen reglas de negocio reutilizables, como cantidad positiva y disponibilidad.
+- **Modelos y repositorios:** `models/`. `Product` expresa la entidad; `catalog.py` contiene las consultas; `database.py` aísla el conector.
+- **Configuración:** `configs/` y `.env`. `app.py` se limita a ensamblar la aplicación y registrar rutas.
 
-### 1. Blueprint Arquitectonico y Separacion de 3 Capas
-- **Capa de Presentacion (Frontend):** `index.html`, `styles.css` y `app.js`. Consume la API mediante llamadas asincronas (`fetch`). Cuenta con control de estados (carga, resultados, modal y badge de conexion).
-- **Capa de Controladores:** Ubicada en `controllers/`. Recibe las peticiones HTTP, extrae parametros, delega a los servicios correspondientes y responde codigos de estado estandarizados (200, 201, 400, 404, 500).
-- **Capa de Logica y Servicios:** Ubicada en `services/`. Valida tipos de datos, restringe precios negativos o inventarios invalidos, y aplica ordenamientos dinamicos.
-- **Capa de Modelos y Datos:** Ubicada en `models/`. Ejecuta sentencias SQL parametrizadas para evitar inyeccion SQL.
+Flujo de página: `GET /` → `shop_controller.home` → `catalog.fetch_products` → `database.query_all` → MySQL → entidades `Product` → `templates/index.html` → HTML al navegador. El template recibe los productos que leyó el repositorio; ni HTML ni JavaScript se conectan directamente a MySQL.
 
-### 2. Tabla de Endpoints y Contrato de la API (/api/v1)
+Flujo del carrito: `static/js/app.js` → `POST /api/v1/carrito/productos` → `api_controller.add_cart_product` → `cart_service.add_product` → `catalog.fetch_product` → `database.query_one` → MySQL. Si la validación pasa, Flask guarda el identificador y la cantidad en la sesión firmada y devuelve JSON.
 
-| Metodo | Ruta | Parametros Query / Path | Descripcion | Codigos HTTP |
-|---|---|---|---|---|
-| GET | /api/v1/salud | Ninguno | Estado operativo de la API y de la base de datos | 200, 503 |
-| GET | /api/v1/estadisticas | Ninguno | Totales de productos, marcas, categorias y promedios | 200, 500 |
-| GET | /api/v1/marcas | Ninguno | Listado de marcas con conteo de productos | 200, 500 |
-| GET | /api/v1/categorias | Ninguno | Arbol de categorias principales con subcategorias anidadas | 200, 500 |
-| GET | /api/v1/productos | `page`, `limit`, `marca`, `categoria`, `subcategoria`, `min_rating`, `q`, `sort` | Catalogo paginado con busqueda y filtros dinamicos | 200, 500 |
-| GET | /api/v1/productos/{id} | Path: `id` | Detalle completo de un producto especifico | 200, 404 |
-| POST | /api/v1/productos | Body JSON | Registro de un nuevo producto con validacion de negocio | 201, 400, 500 |
-| PUT | /api/v1/productos/{id} | Path: `id`, Body JSON | Actualizacion parcial o total de atributos del producto | 200, 400, 404 |
-| DELETE| /api/v1/productos/{id} | Path: `id` | Eliminacion logica o fisica de un producto | 200, 404, 500 |
+## Base de datos MySQL
 
----
+El diagrama parte de las fotos compartidas y del ER suministrado. Se conservan las cuatro entidades y sus claves, se añade `nombre` al producto para que el catálogo tenga un título visible y se marca el precio como USD base para documentar la transformación a COP.
 
-## ENTREGABLES GRUPO MATRIX: Base de Datos MySQL y Proceso ETL
+Fotografías recibidas: [diagrama E-R](Diagramas/00952644-87a4-4592-88a8-c89ece649397.jpg), [diagrama relacional](Diagramas/7fb1f902-c15e-4352-b5a3-c4fbf986b62c.jpg) y [definición de datos](Diagramas/a350a0e5-0d53-40ba-b681-b3a2be6532be.jpg).
 
-**Integrantes:** Juan Jose Herrera (Lider), Francisco Manuel Bermudez, Rafael Angel Hernandez
+| Tabla | Clave primaria | Campos y relación |
+|---|---|---|
+| `marca` | `id_marca` | `nombre` único. Una marca puede asociarse a muchos productos. |
+| `categoria_principal` | `id_main_cat` | `nombre` único. Una categoría contiene subcategorías. |
+| `subcategoria` | `id_subcat` | `id_main_cat` FK y `nombre`; nombre único dentro de su categoría. |
+| `producto` | `id_producto` (`VARCHAR(64)`) | Nombre, descripción, precio `DECIMAL`, rating, reseñas, stock, URL, imagen, `id_marca` FK y `id_subcat` FK. |
 
-### 1. Modelo Entidad-Relacion (MER)
-El diseno relacional se encuentra normalizado en Tercera Forma Normal (3NF) y garantiza integridad referencial con claves primarias y foraneas:
+Relaciones: marca 1:N producto; categoría principal 1:N subcategoría; subcategoría 1:N producto. Las restricciones de clave foránea protegen la integridad. InnoDB aplica las relaciones; no se permite borrar una marca/categoría referenciada. Los índices sirven las búsquedas y relaciones principales.
 
-```mermaid
-erDiagram
-    marca ||--o{ producto : "posee (1:N)"
-    categoria_principal ||--|{ subcategoria : "contiene (1:N)"
-    subcategoria ||--o{ producto : "clasifica (1:N)"
+### Crear y poblar la base
 
-    marca {
-        INT id_marca PK
-        VARCHAR nombre UK
-    }
+1. Instala y ejecuta MySQL 8.
+2. Abre DBeaver, crea una conexión MySQL y conéctate con un usuario que pueda crear la base de datos.
+3. Ejecuta `database/schema.sql`; crea `lepetit` y sus cuatro tablas.
+4. Ejecuta `database/seed.sql` para insertar los datos de demostración.
+5. Ejecuta `database/queries.sql` para revisar joins, categorías, productos disponibles y posibles referencias inválidas.
+6. Crea un usuario de aplicación con permiso de lectura sobre `lepetit` (las operaciones del catálogo son de consulta); el usuario administrativo de la base no debe quedar en `.env` de producción.
+7. Copia `.env.example` como `.env`, completa `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` y la tasa COP. El controlador de productos usa conexión MySQL y no crea ni modifica tablas automáticamente.
 
-    categoria_principal {
-        INT id_main_cat PK
-        VARCHAR nombre UK
-    }
+Los datos de `seed.sql` son sintéticos, no proceden de un Excel/CSV del equipo; por eso no se afirma que se haya limpiado una fuente externa. Si se recibe un archivo real, revisar duplicados, nombres, categorías, precios y stock antes de importarlo.
 
-    subcategoria {
-        INT id_subcat PK
-        INT id_main_cat FK
-        VARCHAR nombre
-    }
+## Instalación y ejecución en Windows
 
-    producto {
-        VARCHAR id_producto PK
-        TEXT descripcion
-        DECIMAL precio
-        DECIMAL rating
-        INT reviews_count
-        INT stock
-        VARCHAR url
-        VARCHAR image_url
-        INT id_marca FK
-        INT id_subcat FK
-    }
-```
+**No uses Live Server para abrir `index.html`.** Las vistas usan Jinja y los datos se cargan desde Flask; JavaScript se comunica con la API Flask y Flask ejecuta SQL contra MySQL. Al abrir el HTML estático no existen esas rutas ni la conexión a la base de datos.
 
-### 2. Proceso de Carga y Validacion (CSV a MySQL)
-1. **Definicion de Estructura:** `database/schema.sql` crea la base de datos `ecommerce_db` y sus tablas con restricciones `NOT NULL`, `UNIQUE` y cascadas de actualizacion.
-2. **Script de Ingestion ETL:** `database/import_csv.py` lee `conjunto_datos/amazon_tech_products_ecommerceGKALI.csv`, limpia valores numericos y de texto, inserta las entidades maestras (`marca`, `categoria_principal`, `subcategoria`) y finalmente vincula los 3,718 productos por lotes transaccionales de 500 registros.
-3. **Validacion de Integridad:** `database/queries.sql` contiene consultas para asegurar que no existan registros huerfanos y reportar metricas clave.
+Desde PowerShell, en la carpeta del proyecto:
 
----
-
-## Guia de Instalacion y Ejecucion
-
-### Requisitos
-
-- Python 3.10 o superior.
-- MySQL 8.0 o superior para el modo MySQL. Si no hay conexion, la API utiliza SQLite local.
-
-Windows (PowerShell):
 ```powershell
-python -m venv .venv
-.venv/Scripts/Activate.ps1
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-```
-
-Linux/macOS:
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-```
-
-### Paso 1: Configurar la Base de Datos en MySQL
-Abre tu cliente MySQL (MySQL Workbench, phpMyAdmin o terminal) y ejecuta el archivo DDL:
-```bash
-mysql -u root -p < database/schema.sql
-```
-
-### Paso 2: Configurar el entorno
-
-Crea el archivo local de variables a partir de la plantilla y coloca credenciales validas de MySQL. Este archivo esta ignorado por Git y no debe publicarse. Sin credenciales validas, la aplicacion usa SQLite e informa el motivo en `/api/v1/salud`.
-
-Windows (PowerShell):
-```powershell
 Copy-Item .env.example .env
 ```
 
-Linux/macOS:
-```bash
-cp .env.example .env
-```
+Completa `.env`, configura MySQL y ejecuta:
 
-### Paso 3: Poblar la Base de Datos (elige una opcion)
-
-Hay tres metodos disponibles, de mayor a menor conveniencia:
-
-**Opcion A — SQL directo (mas rapido, sin Python):**
-Ejecuta el archivo de seeds precargado directamente en MySQL. No requiere el CSV ni Python.
-```bash
-mysql -u root -p ecommerce_db < database/02_seeds.sql
-```
-
-**Opcion B — Script Python ETL (recomendado para produccion):**
-Lee el CSV, normaliza los datos y los inserta por lotes transaccionales. Toma las credenciales de `.env`.
-```bash
-python database/import_csv.py
-```
-
-**Opcion C — Script pandas (alternativo):**
-Usa pandas para procesar el CSV e insertar via `mysql-connector`. Util si se modifica el CSV fuente.
-```bash
-# Requiere pandas instalado
-uv pip install pandas --python .venv
-python database/load_data.py
-```
-
-**Regenerar 02_seeds.sql desde el CSV (si se cambia el archivo de datos):**
-```bash
-python database/generate_inserts.py
-```
-
-
-Las opciones B y C leen la configuracion local de `.env`.
-
-### Paso 4: Iniciar la aplicacion Flask (Frontend + API)
-```bash
-# Iniciar el servidor Flask con la vista MVC y la API REST
+```powershell
 python app.py
 ```
-Abre `http://localhost:5000` para la tienda. La API REST queda disponible en `http://localhost:5000/api/v1`.
-La barra superior mostrara el motor activo. Consulta `/api/v1/salud` para ver el estado y el motivo de cualquier fallback a SQLite.
 
----
+Abre `http://127.0.0.1:5000`. El servidor no crea el esquema: la base y los datos deben cargarse antes siguiendo los pasos anteriores. En caso de error de conexión la aplicación presenta un error `503` explícito; revisa la configuración y que MySQL esté activo.
 
-## Diagramas Tecnicos Completos
-Para revisar los diagramas de arquitectura C4, modelo de componentes, flujo ETL y secuencia detallada de peticiones HTTP, consulta el archivo [docs/diagramas.md](docs/diagramas.md).
+La insignia superior llama a `GET /api/v1/salud`. El endpoint ejecuta `SELECT 1` desde el backend y muestra si Flask logró comunicarse con MySQL. JavaScript no guarda credenciales ni abre conexiones SQL directamente desde el navegador.
+
+### HTTPS local
+
+El desarrollo local funciona en HTTP. Para probar HTTPS, genera un certificado de desarrollo fuera del repositorio y define `SSL_CERT_FILE` y `SSL_KEY_FILE` en `.env`; deben configurarse ambos. Flask inicia HTTPS local con ese certificado. No compartas ni subas certificados privados. En producción, termina HTTPS en un proxy inverso y activa `SESSION_COOKIE_SECURE=true`.
+
+## Funcionalidades web
+
+- Catálogo poblado desde MySQL.
+- Búsqueda por nombre, descripción o marca.
+- Filtro por categoría principal y orden por precio ascendente/descendente o valoración.
+- Página de detalle con descripción, rating, reseñas y existencias.
+- Precios en COP con separador local colombiano y tasa configurable.
+- Carrito: agregar, cambiar cantidad, quitar productos; valida existencia y stock.
+- Mensajes accesibles de éxito/error y fallback local si una imagen externa no carga.
+- Diseño adaptativo básico en gris, blanco y negro. Sin efectos visuales ni dependencias de frontend.
+
+El carrito es temporal en una cookie de sesión Flask firmada. La sesión no contiene el precio como fuente confiable: el servidor vuelve a leer precio y stock en MySQL. No se registra una orden, no se descuenta stock y no se procesa un pago.
+
+## API REST
+
+Prefijo y versión: `/api/v1`. Las respuestas exitosas usan `{ "data": ... }`; los errores usan `{ "error": { "code": "...", "message": "..." } }`.
+
+| Método | Ruta | Parámetros / JSON | Respuestas principales |
+|---|---|---|---|
+| GET | `/api/v1/salud` | — | 200, 503 |
+| GET | `/api/v1/productos` | Opcionales: `category_id`, `subcategory_id`, `q`, `sort` (`featured`, `price_asc`, `price_desc`, `rating_desc`) | 200, 400 |
+| GET | `/api/v1/productos/{id}` | ID de producto | 200, 404 |
+| GET | `/api/v1/categorias` | — | 200 |
+| GET | `/api/v1/carrito` | — | 200 |
+| POST | `/api/v1/carrito/productos` | `{"product_id":"LP-001","quantity":1}` | 201, 400, 404, 409 |
+| PATCH | `/api/v1/carrito/productos/{id}` | `{"quantity":2}` | 200, 400, 404, 409 |
+| DELETE | `/api/v1/carrito/productos/{id}` | ID de producto | 204, 404 |
+
+`400` indica formato o valor inválido; `404`, recurso ausente; `409`, stock insuficiente; `503`, base de datos sin conexión/configuración. Los filtros y cantidades se validan en el servidor, los valores SQL se parametrizan y `sort` se escoge de una lista permitida.
+
+El contrato legible por herramientas está en [docs/openapi.yaml](docs/openapi.yaml). El navegador y la API tienen el mismo origen; no se habilita CORS abierto. Si se separa el frontend en otro dominio, debe permitirse explícitamente solo ese origen y revisar credenciales/cookies antes de desplegar.
+
+### Probar con curl
+
+```powershell
+curl.exe "http://127.0.0.1:5000/api/v1/productos?category_id=1&sort=price_asc"
+curl.exe "http://127.0.0.1:5000/api/v1/productos/LP-001"
+curl.exe -X POST "http://127.0.0.1:5000/api/v1/carrito/productos" `
+  -H "Content-Type: application/json" `
+  -d "{\"product_id\":\"LP-001\",\"quantity\":1}"
+```
+
+Para conservar la cookie de sesión entre llamadas API con curl, agrega `-c cookies.txt` al POST y `-b cookies.txt` a las consultas siguientes.
+
+## Diagramas y exposición C4
+
+La explicación y el flujo están en [docs/C4.md](docs/C4.md). Los fuentes editables Mermaid están en `docs/diagramas/`:
+
+- [C1 Contexto](docs/diagramas/C1-contexto.mmd): actor, sistema y servicio externo de imágenes.
+- [C2 Contenedores](docs/diagramas/C2-contenedores.mmd): navegador, aplicación Flask y MySQL.
+- [C3 Componentes](docs/diagramas/C3-componentes.mmd): componentes internos del backend.
+- [C4 Código del carrito](docs/diagramas/C4-funcionalidad-carrito.mmd): módulos, métodos, base de datos y sesión.
+- [Modelo ER](docs/diagramas/modelo-entidad-relacion.mmd): tablas, claves y cardinalidades.
+
+Para explicar la exposición: C1, quién usa LePetit; C2, navegador, servidor y base de datos; C3, responsabilidades internas de Flask; C4, la petición de agregar un producto y sus validaciones.
+
+## Actividades cubiertas
+
+### Modelado y MySQL
+
+1. Se definieron producto, marca, categoría y subcategoría.
+2. Se acordaron formatos de categoría y valores de ejemplo; no se recibió fuente real para depurar.
+3. Se documentaron entidades, atributos y cardinalidades en el ER.
+4. Se declararon claves primarias, únicas y foráneas.
+5. Se conservaron los diagramas entregados y se añadió el ER Mermaid coherente con el SQL.
+6. `schema.sql` crea el esquema MySQL con tipos, restricciones e índices.
+7. `seed.sql` registra productos de demostración en orden relacional.
+8. `queries.sql` revisa joins y posibles referencias inválidas.
+9. La consulta de catálogo implementa búsqueda, filtro y ordenamiento; el stock se valida para el carrito.
+10. `models/database.py` conecta Flask con MySQL desde variables locales.
+
+### Arquitectura web y contrato HTTP
+
+- El blueprint de carpetas está implementado según el árbol anterior; no hay un `app.py` monolítico.
+- El contrato API está versionado, usa sustantivos plurales, filtros y estados HTTP explícitos.
+- Los endpoints API sirven tanto a la interfaz JavaScript como a clientes de prueba.
+- No se activa CORS porque la aplicación consume la API en su mismo origen.
+- HTTPS local se puede habilitar con certificado propio; HTTP queda para el desarrollo simple.
+- No hay autenticación: el MVP solo permite catálogo y carrito de visitante. No se aceptan escrituras de productos ni pagos.
+
+### Git y GitHub
+
+El repositorio del equipo es [Juan2351/Tech_e-commerce](https://github.com/Juan2351/Tech_e-commerce). Esta entrega reemplaza el árbol funcional anterior por LePetit y conserva el historial Git existente. El desarrollo y la publicación se hacen en la rama `main`; no se crean commits ficticios ni se afirma que existan PRs o invitaciones de colaboradores.
+
+Para obtener y ejecutar la versión publicada:
+
+```powershell
+git clone https://github.com/Juan2351/Tech_e-commerce.git
+Set-Location .\Tech_e-commerce
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
+# Edita .env, prepara MySQL siguiendo la sección anterior y luego:
+python app.py
+```
+
+No abras `templates/index.html` con Live Server: arranca Flask con `python app.py` y abre `http://127.0.0.1:5000`. Para contribuir después, crea una rama (`git switch -c feature/mi-cambio`), prueba el cambio, haz commit y súbela (`git push -u origin feature/mi-cambio`) para abrir un PR contra `main`. Agregar colaboradores, aprobar PRs o cambiar permisos requiere acceso autorizado al repositorio.
+
+## Validación
+
+Instala dependencias y ejecuta las pruebas:
+
+```powershell
+python -m unittest discover -s tests -v
+```
+
+Los tests automatizados comprueban formato API, filtros, errores de validación, stock, carrito y renderizado de precios. La ejecución de sentencias DDL y del seed en MySQL debe validarse en la instancia de MySQL/DBeaver del equipo.
+
+## Equipo indicado en las guías
+
+- **Actividad Git, Grupo Ying Yang:** Juan Alberto Trujillo Herrera, Martín Camilo Corredor Pescador y Rubén Darío Peña.
+- **Actividad MySQL, Grupo Matrix:** Juan José Herrera, Francisco Manuel Bermúdez y Rafael Ángel Hernández.
+- **Cuenta GitHub facilitada:** CrisArbo.
+
+Los integrantes se listan porque aparecen en las instrucciones compartidas; el equipo debe confirmar si ambos grupos trabajan sobre el mismo repositorio antes de asignar responsabilidades.

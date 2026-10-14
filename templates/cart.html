@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Carrito | LePetit{% endblock %}
+{% block content %}
+<section>
+    <div class="section-heading">
+        <h1>Tu carrito</h1>
+        <a href="{{ url_for('shop.home') }}">Seguir explorando</a>
+    </div>
+    {% if items %}
+    <div class="cart-list">
+        {% for item in items %}
+        <article class="cart-item">
+            <img src="{{ item.product.image_url or url_for('static', filename='img/product-placeholder.svg') }}"
+                 alt="" loading="lazy">
+            <div class="cart-product">
+                <h2><a href="{{ url_for('shop.product_detail', product_id=item.product.id_producto) }}">{{ item.product.nombre }}</a></h2>
+                <p>{{ item.product.precio|cop }} por unidad</p>
+                <p class="muted">Subtotal: {{ item.subtotal|cop }}</p>
+            </div>
+            <label class="quantity-control">
+                Cantidad
+                <input type="number" min="1" max="{{ item.product.stock }}" value="{{ item.quantity }}"
+                       data-cart-quantity="{{ item.product.id_producto }}">
+            </label>
+            <button type="button" class="button-secondary" data-cart-update="{{ item.product.id_producto }}">Actualizar</button>
+            <button type="button" class="button-secondary" data-cart-remove="{{ item.product.id_producto }}">Quitar</button>
+        </article>
+        {% endfor %}
+    </div>
+    <div class="cart-total">
+        <p>Total estimado</p>
+        <strong>{{ total|cop }}</strong>
+    </div>
+    <p class="muted">El carrito es una demostración. No se procesa pago ni se crea una orden.</p>
+    {% else %}
+    <p class="empty-state">Tu carrito está vacío.</p>
+    <a class="button" href="{{ url_for('shop.home') }}">Ver productos</a>
+    {% endif %}
+</section>
+{% endblock %}

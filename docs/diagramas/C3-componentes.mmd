@@ -1,0 +1,20 @@
+C4Component
+title C3 - Componentes de la aplicación Flask
+
+Container_Boundary(web, "Aplicación web LePetit") {
+    Component(shop_controller, "Shop Controller", "Flask Blueprint", "Controla solicitudes HTML: catálogo, detalle y carrito.")
+    Component(api_controller, "API Controller", "Flask Blueprint", "Valida parámetros y publica recursos REST /api/v1.")
+    Component(cart_service, "Cart Service", "Python", "Aplica reglas de cantidad y disponibilidad; resume el carrito.")
+    Component(catalog_repository, "Catalog Repository", "models/catalog.py", "Consulta y relaciona productos, marcas y categorías.")
+    Component(product_model, "Product Model", "dataclass", "Representa producto y serializa atributos para la API.")
+    Component(database, "Database Adapter", "mysql.connector", "Abre una conexión MySQL por solicitud y ejecuta SQL parametrizado.")
+}
+ContainerDb(mysql, "Base de datos", "MySQL 8", "Tablas producto, marca, categoria_principal y subcategoria.")
+
+Rel(shop_controller, catalog_repository, "Solicita categorías y productos")
+Rel(shop_controller, cart_service, "Calcula líneas y total del carrito")
+Rel(api_controller, catalog_repository, "Lee catálogo y disponibilidad")
+Rel(api_controller, cart_service, "Valida altas, cambios y bajas del carrito")
+Rel(catalog_repository, product_model, "Convierte filas a entidades")
+Rel(catalog_repository, database, "Solicita datos con parámetros")
+Rel(database, mysql, "Ejecuta consultas", "SQL")

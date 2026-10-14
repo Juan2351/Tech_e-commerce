@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="LePetit, catálogo y tienda en línea.">
+    <title>{% block title %}LePetit | Tienda en línea{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="brand" href="{{ url_for('shop.home') }}">LEPETIT</a>
+            <nav aria-label="Navegación principal">
+                <a href="{{ url_for('shop.home') }}#catalogo">Catálogo</a>
+                <a href="{{ url_for('shop.cart') }}">Carrito <span class="cart-count" data-cart-count>{{ cart_count|default(0) }}</span></a>
+            </nav>
+            <span class="database-status" data-database-status role="status" aria-live="polite">
+                Comprobando base de datos...
+            </span>
+        </div>
+    </header>
+    <main class="page">
+        <p class="feedback" data-feedback role="status" aria-live="polite"></p>
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="site-footer">
+        <p>LePetit · Catálogo de productos y carrito de compras de demostración.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}No se pudo completar | LePetit{% endblock %}
+{% block content %}
+<section class="empty-state">
+    <h1>No se pudo completar la solicitud</h1>
+    <p>{{ message }}</p>
+    <a class="button" href="{{ url_for('shop.home') }}">Volver al inicio</a>
+</section>
+{% endblock %}

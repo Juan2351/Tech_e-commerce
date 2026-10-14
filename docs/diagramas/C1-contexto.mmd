@@ -1,0 +1,9 @@
+C4Context
+title C1 - Contexto del sistema LePetit
+
+Person(cliente, "Cliente", "Consulta productos, filtra el catálogo y administra su carrito.")
+System(lepetit, "LePetit", "Tienda web para consultar un catálogo y preparar un carrito de compra.")
+System_Ext(imagenes, "CDN de imágenes", "Entrega imágenes de muestra referenciadas por el catálogo.")
+
+Rel(cliente, lepetit, "Consulta el catálogo y gestiona el carrito")
+Rel(cliente, imagenes, "Carga imágenes de producto desde el navegador")

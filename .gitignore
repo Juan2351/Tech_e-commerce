@@ -1,42 +1,13 @@
-# Archivos compilados de Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.pyo
-
-# Entorno virtual
+.env
 .venv/
 venv/
-env/
-
-# Variables de entorno con credenciales
-.env
-.env.*
-!.env.example
-
-# Base de datos SQLite local (generada automaticamente)
-database/ecommerce_local.db
-*.db
-*.sqlite3
-
-# Archivos de compilacion y caché generados
 __pycache__/
 *.py[cod]
-
-# Archivos del sistema operativo
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Editores e IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Logs
 *.log
-
-# Archivos temporales
-*.tmp
-*.bak
+.pytest_cache/
+.coverage
+htmlcov/
+database/*.db
+database/*.sqlite*
+cert.pem
+key.pem
