@@ -9,7 +9,7 @@ LePetit es una tienda web de demostración para consultar un catálogo de produc
 - **Usuarios:** cliente visitante. No hay cuentas de usuario ni panel de administración en este prototipo.
 - **Funcionalidades implementadas:** listar, buscar y filtrar productos; ordenar por precio o calificación; consultar detalle; agregar, actualizar y quitar productos del carrito; consultar endpoints REST.
 - **Información almacenada:** título del producto, precio base, calificación, reseñas, stock, enlaces, imagen, marca, categoría principal y subcategoría. El carrito se guarda temporalmente en la sesión Flask firmada.
-- **Integraciones:** SQLite local para el catálogo y un CDN externo para imágenes de muestra. No se integra pasarela de pagos, autenticación, mapas, correo ni WhatsApp.
+- **Integraciones:** SQLite local para el catálogo; URLs de imágenes del CSV, Unsplash CDN como respaldo por categoría y una imagen SVG local como último recurso. No se integra pasarela de pagos, autenticación, mapas, correo ni WhatsApp.
 
 ## Tecnologías y decisiones
 
@@ -22,6 +22,7 @@ LePetit es una tienda web de demostración para consultar un catálogo de produc
 | Persistencia | SQLite | Base relacional local que se crea automáticamente; no requiere instalar ni configurar un servidor. |
 | Acceso a datos | `sqlite3` de Python y SQL parametrizado | Evita sumar ORM y mantiene visibles el DDL y las relaciones SQL. |
 | Configuración | `.env` local y `python-dotenv` | Permite cambiar rutas locales y la tasa de conversión sin incluir configuración privada. |
+| Imágenes | URLs del CSV, Unsplash CDN y SVG local | Se conserva la imagen original cuando carga; hay respaldo visual por categoría y una alternativa local. |
 | Documentación | Mermaid y OpenAPI 3.0 | Fuentes editables para C1-C4, modelo relacional y contrato HTTP. |
 
 La lista inicial también menciona Java. No se utiliza en esta versión: se seleccionó Python/Flask como único backend para mantener un solo servidor y una arquitectura coherente. El proyecto tampoco necesita React porque Flask entrega HTML y el JavaScript consume la API en el mismo origen.
@@ -135,6 +136,28 @@ Relaciones: marca 1:N producto; categoría principal 1:N subcategoría; subcateg
 El catálogo cubre smartphones Android e iPhone, laptops (incluidos equipos gaming), PC de escritorio y mini PC, mouse y teclados, monitores, audio, tablets, relojes, almacenamiento y docks. El CSV disponible no contiene productos clasificados como consolas ni videojuegos; no se inventan artículos ni se muestran categorías vacías. Para completar esas líneas se requiere un CSV real con esos productos.
 
 La primera solicitud web crea `database/lepetit.sqlite3`, ejecuta el esquema y las categorías y carga los productos en una transacción. La base poblada no se importa de nuevo en cada solicitud. Para reconstruirla desde un CSV actualizado, detén Flask y elimina el archivo SQLite generado.
+
+### Conexión entre Flask y SQLite
+
+La aplicación utiliza el módulo `sqlite3` incluido en Python; no requiere un servidor SQL separado, una cuenta de base de datos ni credenciales de MySQL. `models/database.py` abre una conexión a `DATABASE_PATH` cuando una solicitud Flask necesita datos, activa las claves foráneas y configura filas accesibles por nombre. La conexión queda asociada al contexto de esa solicitud y se cierra al terminarla. Las consultas usan parámetros `?` en lugar de concatenar valores del usuario.
+
+En la primera consulta, `models/database_setup.py` crea las tablas definidas en `database/schema.sql`, aplica las categorías de `database/seed.sql` e importa el CSV si la tabla `producto` aún no tiene registros. La importación valida las columnas y valores, crea marcas y subcategorías faltantes y confirma los datos dentro de una transacción. Si faltan datos o hay conflictos, la carga se revierte y Flask reporta que la base no está disponible; no presenta un catálogo vacío como si hubiera sido importado correctamente.
+
+La ruta `GET /api/v1/salud` ejecuta `SELECT 1` a través de la misma capa de datos. La insignia del encabezado consulta esa ruta y muestra el estado devuelto por Flask, por lo que el navegador nunca abre una conexión SQL directa.
+
+| Variable | Valor predeterminado | Uso |
+|---|---|---|
+| `DATABASE_PATH` | `database/lepetit.sqlite3` | Ruta de la base SQLite local. |
+| `DATASET_CSV_PATH` | `database/data/amazon_tech_products_ecommerceGKALI.csv` | Ruta del catálogo tecnológico de origen. |
+| `USD_TO_COP_RATE` | `4200` | Conversión de precios base USD a COP; no es una cotización en tiempo real. |
+
+Las rutas relativas se resuelven desde la carpeta del proyecto. Se pueden cambiar en el archivo `.env`, creado a partir de `.env.example`; la base SQLite generada y las credenciales locales no se suben a Git.
+
+### Tecnología y respaldo de imágenes
+
+Cada producto conserva el campo `image_url` que viene en el CSV y la página intenta mostrar esa URL. Como algunas imágenes remotas de Amazon no responden en el navegador, `static/js/app.js` escucha los errores de carga y selecciona una fotografía representativa de Unsplash según la subcategoría. Si tampoco se puede cargar la imagen remota, se usa `static/img/product-placeholder.svg`.
+
+Las fotografías de Unsplash se sirven desde su CDN mediante URLs directas por identificador; el proyecto no llama a una API de imágenes ni necesita una clave. Son recursos ilustrativos por categoría y no una garantía de que la fotografía corresponda al SKU exacto. Las imágenes remotas requieren conexión a Internet; el SVG local permite mantener un respaldo cuando la red o los CDNs no están disponibles.
 
 ## Instalación y ejecución en Windows
 
