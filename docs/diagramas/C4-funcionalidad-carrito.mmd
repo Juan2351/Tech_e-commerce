@@ -1,8 +1,16 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Aptos, Segoe UI, Arial, sans-serif","fontSize":"16px","primaryColor":"#EAF2FF","primaryTextColor":"#10233F","primaryBorderColor":"#3973B9","lineColor":"#58708E","secondaryColor":"#F1F5F9","tertiaryColor":"#E7F5F2","background":"#FFFFFF","mainBkg":"#FFFFFF","textColor":"#10233F","classText":"#10233F"}}}%%
 classDiagram
+    direction TB
+
+    class BrowserJavaScript {
+        +sendCartRequest(url, method, body)
+        +updateCartCount(count)
+        +showFeedback(message)
+    }
     class APIController {
-        +addCartProduct()
-        +changeCartProduct(productId)
-        +deleteCartProduct(productId)
+        +add_cart_product()
+        +change_cart_product(productId)
+        +delete_cart_product(productId)
     }
     class CartService {
         +add_product(cart, productId, quantity)
@@ -17,35 +25,39 @@ classDiagram
         +id_producto: str
         +precio: Decimal
         +stock: int
-        +from_row(row)
         +to_dict(rate)
     }
     class DatabaseAdapter {
-        +get_db()
         +query_one(sql, params)
         +query_all(sql, params)
     }
-    class BrowserJavaScript {
-        +sendCartRequest(url, method, body)
-        +updateCartCount(count)
-        +showFeedback(message)
+    class FlaskSession {
+        <<cookie firmada>>
+        cart: productId to quantity
     }
     class MySQL {
-        <<database>>
+        <<base de datos>>
         producto
         marca
         subcategoria
         categoria_principal
     }
-    class FlaskSession {
-        <<signed session cookie>>
-        cart: productId to quantity
-    }
 
-    BrowserJavaScript --> APIController : HTTPS/HTTP JSON
-    APIController --> CartService : validates requested operation
-    APIController --> FlaskSession : reads/writes cart
-    CartService --> CatalogRepository : verifies product and stock
-    CartService --> Product : uses product model
-    CatalogRepository --> DatabaseAdapter : parameterized SQL
-    DatabaseAdapter --> MySQL : MySQL protocol
+    BrowserJavaScript --> APIController : POST JSON · HTTP
+    APIController --> CartService : valida operación
+    APIController --> FlaskSession : guarda cantidades
+    CartService --> CatalogRepository : verifica producto y stock
+    CatalogRepository --> Product : crea entidad
+    CatalogRepository --> DatabaseAdapter : SQL parametrizado
+    DatabaseAdapter --> MySQL : consulta de producto
+
+    classDef frontend fill:#EAF2FF,stroke:#3973B9,color:#10233F,stroke-width:2px;
+    classDef controller fill:#DDEBFA,stroke:#3973B9,color:#10233F,stroke-width:2px;
+    classDef service fill:#E7F5F2,stroke:#318477,color:#153E3A,stroke-width:2px;
+    classDef data fill:#FFF2D6,stroke:#C48A24,color:#4A3512,stroke-width:2px;
+    class BrowserJavaScript frontend;
+    class APIController controller;
+    class CartService service;
+    class CatalogRepository,Product service;
+    class DatabaseAdapter,MySQL data;
+    class FlaskSession frontend;

@@ -1,9 +1,17 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Aptos, Segoe UI, Arial, sans-serif","fontSize":"16px","primaryColor":"#EAF2FF","primaryTextColor":"#10233F","primaryBorderColor":"#3973B9","lineColor":"#58708E","secondaryColor":"#F1F5F9","tertiaryColor":"#E7F5F2","background":"#FFFFFF","mainBkg":"#FFFFFF","textColor":"#10233F"}}}%%
 C4Context
-title C1 - Contexto del sistema LePetit
+title C1 · Contexto del sistema LePetit
 
-Person(cliente, "Cliente", "Consulta productos, filtra el catálogo y administra su carrito.")
-System(lepetit, "LePetit", "Tienda web para consultar un catálogo y preparar un carrito de compra.")
-System_Ext(imagenes, "CDN de imágenes", "Entrega imágenes de muestra referenciadas por el catálogo.")
+Person(cliente, "Cliente", "Explora productos y administra su carrito.")
+System(lepetit, "LePetit", "Tienda web para explorar el catálogo y preparar una compra.")
+System_Ext(imagenes, "CDN de imágenes", "Entrega imágenes de muestra mediante HTTPS.")
 
-Rel(cliente, lepetit, "Consulta el catálogo y gestiona el carrito")
-Rel(cliente, imagenes, "Carga imágenes de producto desde el navegador")
+Rel(cliente, lepetit, "Consulta productos y gestiona el carrito", "HTTPS")
+Rel(cliente, imagenes, "Carga imágenes del catálogo", "HTTPS")
+
+UpdateElementStyle(cliente, $bgColor="#DBEAFE", $fontColor="#10233F", $borderColor="#3973B9")
+UpdateElementStyle(lepetit, $bgColor="#17365D", $fontColor="#FFFFFF", $borderColor="#10233F")
+UpdateElementStyle(imagenes, $bgColor="#F1F5F9", $fontColor="#25364D", $borderColor="#7B8DA4")
+UpdateRelStyle(cliente, lepetit, $textColor="#263B56", $lineColor="#3973B9")
+UpdateRelStyle(cliente, imagenes, $textColor="#52657D", $lineColor="#7B8DA4")
+UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")

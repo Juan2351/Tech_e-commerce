@@ -1,20 +1,37 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Aptos, Segoe UI, Arial, sans-serif","fontSize":"16px","primaryColor":"#EAF2FF","primaryTextColor":"#10233F","primaryBorderColor":"#3973B9","lineColor":"#58708E","secondaryColor":"#F1F5F9","tertiaryColor":"#E7F5F2","background":"#FFFFFF","mainBkg":"#FFFFFF","textColor":"#10233F"}}}%%
 C4Component
-title C3 - Componentes de la aplicación Flask
+title C3 · Componentes de la aplicación Flask
 
-Container_Boundary(web, "Aplicación web LePetit") {
-    Component(shop_controller, "Shop Controller", "Flask Blueprint", "Controla solicitudes HTML: catálogo, detalle y carrito.")
-    Component(api_controller, "API Controller", "Flask Blueprint", "Valida parámetros y publica recursos REST /api/v1.")
-    Component(cart_service, "Cart Service", "Python", "Aplica reglas de cantidad y disponibilidad; resume el carrito.")
-    Component(catalog_repository, "Catalog Repository", "models/catalog.py", "Consulta y relaciona productos, marcas y categorías.")
-    Component(product_model, "Product Model", "dataclass", "Representa producto y serializa atributos para la API.")
-    Component(database, "Database Adapter", "mysql.connector", "Abre una conexión MySQL por solicitud y ejecuta SQL parametrizado.")
+Container_Boundary(web, "Backend LePetit · Python y Flask") {
+    Component(shop_controller, "Controlador de tienda", "Flask Blueprint", "Renderiza catálogo, detalle y carrito.")
+    Component(api_controller, "Controlador API", "Flask Blueprint", "Valida y responde a solicitudes REST.")
+    Component(cart_service, "Servicio de carrito", "Python", "Valida cantidades y disponibilidad.")
+    Component(catalog_repository, "Repositorio de catálogo", "models/catalog.py", "Consulta productos y categorías.")
+    Component(product_model, "Modelo Product", "dataclass", "Representa y serializa los productos.")
+    Component(database, "Adaptador MySQL", "mysql.connector", "Ejecuta consultas SQL parametrizadas.")
 }
-ContainerDb(mysql, "Base de datos", "MySQL 8", "Tablas producto, marca, categoria_principal y subcategoria.")
+ContainerDb(mysql, "Base de datos", "MySQL 8", "Productos, marcas y categorías.")
 
-Rel(shop_controller, catalog_repository, "Solicita categorías y productos")
-Rel(shop_controller, cart_service, "Calcula líneas y total del carrito")
-Rel(api_controller, catalog_repository, "Lee catálogo y disponibilidad")
-Rel(api_controller, cart_service, "Valida altas, cambios y bajas del carrito")
-Rel(catalog_repository, product_model, "Convierte filas a entidades")
-Rel(catalog_repository, database, "Solicita datos con parámetros")
-Rel(database, mysql, "Ejecuta consultas", "SQL")
+Rel(shop_controller, catalog_repository, "Lee catálogo")
+Rel(shop_controller, cart_service, "Resume carrito")
+Rel(api_controller, catalog_repository, "Lee catálogo y stock")
+Rel(api_controller, cart_service, "Valida operaciones")
+Rel(catalog_repository, product_model, "Crea entidades")
+Rel(catalog_repository, database, "Solicita datos")
+Rel(database, mysql, "Consulta", "SQL")
+
+UpdateElementStyle(shop_controller, $bgColor="#EAF2FF", $fontColor="#10233F", $borderColor="#3973B9")
+UpdateElementStyle(api_controller, $bgColor="#DDEBFA", $fontColor="#10233F", $borderColor="#3973B9")
+UpdateElementStyle(cart_service, $bgColor="#E7F5F2", $fontColor="#153E3A", $borderColor="#318477")
+UpdateElementStyle(catalog_repository, $bgColor="#E7F5F2", $fontColor="#153E3A", $borderColor="#318477")
+UpdateElementStyle(product_model, $bgColor="#F1F5F9", $fontColor="#25364D", $borderColor="#7B8DA4")
+UpdateElementStyle(database, $bgColor="#FFF2D6", $fontColor="#4A3512", $borderColor="#C48A24")
+UpdateElementStyle(mysql, $bgColor="#FFF2D6", $fontColor="#4A3512", $borderColor="#C48A24")
+UpdateRelStyle(shop_controller, catalog_repository, $textColor="#263B56", $lineColor="#3973B9")
+UpdateRelStyle(shop_controller, cart_service, $textColor="#285D56", $lineColor="#318477")
+UpdateRelStyle(api_controller, catalog_repository, $textColor="#263B56", $lineColor="#3973B9")
+UpdateRelStyle(api_controller, cart_service, $textColor="#285D56", $lineColor="#318477")
+UpdateRelStyle(catalog_repository, product_model, $textColor="#52657D", $lineColor="#7B8DA4")
+UpdateRelStyle(catalog_repository, database, $textColor="#66501F", $lineColor="#C48A24")
+UpdateRelStyle(database, mysql, $textColor="#66501F", $lineColor="#C48A24")
+UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
