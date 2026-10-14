@@ -1,27 +1,29 @@
 %%{init: {"theme":"base","themeVariables":{"fontFamily":"Aptos, Segoe UI, Arial, sans-serif","fontSize":"16px","primaryColor":"#EAF2FF","primaryTextColor":"#10233F","primaryBorderColor":"#3973B9","lineColor":"#58708E","secondaryColor":"#F1F5F9","tertiaryColor":"#E7F5F2","background":"#FFFFFF","mainBkg":"#FFFFFF","textColor":"#10233F"}}}%%
-C4Container
-title C2 · Contenedores de LePetit
+flowchart LR
+    cliente(("Cliente<br/>Navega y agrega<br/>productos"))
 
-Person(cliente, "Cliente", "Navega y agrega productos al carrito.")
-System_Boundary(lepetit, "LePetit · tienda web") {
-    Container(browser, "Navegador", "HTML · CSS · JavaScript", "Muestra la tienda y consume la API del mismo origen.")
-    Container(web, "Aplicación web", "Python · Flask · Jinja", "Entrega las vistas, valida solicitudes y aplica las reglas del carrito.")
-    ContainerDb(mysql, "Base de datos", "MySQL 8", "Almacena productos, marcas y categorías.")
-}
-System_Ext(imagenes, "CDN de imágenes", "Imágenes de muestra servidas por HTTPS.")
+    subgraph lepetit["LePetit · sistema de comercio"]
+        direction LR
+        navegador["Navegador web<br/>HTML · CSS · JavaScript<br/>Muestra la tienda y consume la API"]
+        aplicacion["Aplicación web<br/>Python · Flask · Jinja<br/>Entrega páginas y valida operaciones"]
+        mysql[("Base de datos<br/>MySQL 8<br/>Productos, marcas y categorías")]
+        navegador -->|"HTML y API JSON<br/>HTTP local · HTTPS en despliegue"| aplicacion
+        aplicacion -->|"Consulta catálogo · SQL"| mysql
+    end
 
-Rel(cliente, browser, "Navega la tienda")
-Rel(browser, web, "HTML y API JSON", "HTTP local · HTTPS en despliegue")
-Rel(web, mysql, "Consulta el catálogo", "SQL · MySQL")
-Rel(browser, imagenes, "Carga imágenes", "HTTPS")
+    cdn[("CDN de imágenes<br/>Servicio externo · HTTPS")]
+    cliente -->|"Navega la tienda"| navegador
+    navegador -.->|"Solicita imágenes · HTTPS"| cdn
 
-UpdateElementStyle(cliente, $bgColor="#DBEAFE", $fontColor="#10233F", $borderColor="#3973B9")
-UpdateElementStyle(browser, $bgColor="#EAF2FF", $fontColor="#10233F", $borderColor="#3973B9")
-UpdateElementStyle(web, $bgColor="#DDEBFA", $fontColor="#10233F", $borderColor="#3973B9")
-UpdateElementStyle(mysql, $bgColor="#FFF2D6", $fontColor="#4A3512", $borderColor="#C48A24")
-UpdateElementStyle(imagenes, $bgColor="#F1F5F9", $fontColor="#25364D", $borderColor="#7B8DA4")
-UpdateRelStyle(cliente, browser, $textColor="#263B56", $lineColor="#3973B9")
-UpdateRelStyle(browser, web, $textColor="#263B56", $lineColor="#3973B9")
-UpdateRelStyle(web, mysql, $textColor="#66501F", $lineColor="#C48A24")
-UpdateRelStyle(browser, imagenes, $textColor="#52657D", $lineColor="#7B8DA4")
-UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+    classDef actor fill:#DBEAFE,stroke:#3973B9,color:#10233F,stroke-width:2px,font-size:16px;
+    classDef frontend fill:#EAF2FF,stroke:#3973B9,color:#10233F,stroke-width:2px,font-size:16px;
+    classDef backend fill:#DDEBFA,stroke:#3973B9,color:#10233F,stroke-width:2px,font-size:16px;
+    classDef database fill:#FFF2D6,stroke:#C48A24,color:#4A3512,stroke-width:2px,font-size:16px;
+    classDef external fill:#F1F5F9,stroke:#7B8DA4,color:#25364D,stroke-width:2px,font-size:16px;
+    style lepetit fill:#F8FAFC,stroke:#7B8DA4,stroke-width:2px,color:#10233F
+    class cliente actor;
+    class navegador frontend;
+    class aplicacion backend;
+    class mysql database;
+    class cdn external;
+    linkStyle default stroke:#58708E,stroke-width:2px;

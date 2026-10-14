@@ -1,17 +1,16 @@
 %%{init: {"theme":"base","themeVariables":{"fontFamily":"Aptos, Segoe UI, Arial, sans-serif","fontSize":"16px","primaryColor":"#EAF2FF","primaryTextColor":"#10233F","primaryBorderColor":"#3973B9","lineColor":"#58708E","secondaryColor":"#F1F5F9","tertiaryColor":"#E7F5F2","background":"#FFFFFF","mainBkg":"#FFFFFF","textColor":"#10233F"}}}%%
-C4Context
-title C1 · Contexto del sistema LePetit
+flowchart LR
+    cliente(("Cliente<br/>Persona<br/>Explora el catálogo<br/>y gestiona el carrito"))
+    lepetit(["LePetit<br/>Tienda web<br/>Catálogo y carrito"])
+    imagenes[("CDN de imágenes<br/>Sistema externo<br/>Entrega imágenes por HTTPS")]
 
-Person(cliente, "Cliente", "Explora productos y administra su carrito.")
-System(lepetit, "LePetit", "Tienda web para explorar el catálogo y preparar una compra.")
-System_Ext(imagenes, "CDN de imágenes", "Entrega imágenes de muestra mediante HTTPS.")
+    cliente -->|"Consulta productos<br/>y actualiza el carrito"| lepetit
+    cliente -.->|"Carga imágenes<br/>de producto · HTTPS"| imagenes
 
-Rel(cliente, lepetit, "Consulta productos y gestiona el carrito", "HTTPS")
-Rel(cliente, imagenes, "Carga imágenes del catálogo", "HTTPS")
-
-UpdateElementStyle(cliente, $bgColor="#DBEAFE", $fontColor="#10233F", $borderColor="#3973B9")
-UpdateElementStyle(lepetit, $bgColor="#17365D", $fontColor="#FFFFFF", $borderColor="#10233F")
-UpdateElementStyle(imagenes, $bgColor="#F1F5F9", $fontColor="#25364D", $borderColor="#7B8DA4")
-UpdateRelStyle(cliente, lepetit, $textColor="#263B56", $lineColor="#3973B9")
-UpdateRelStyle(cliente, imagenes, $textColor="#52657D", $lineColor="#7B8DA4")
-UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")
+    classDef actor fill:#DBEAFE,stroke:#3973B9,color:#10233F,stroke-width:2px,font-size:16px;
+    classDef system fill:#17365D,stroke:#10233F,color:#FFFFFF,stroke-width:2px,font-size:16px;
+    classDef external fill:#F1F5F9,stroke:#7B8DA4,color:#25364D,stroke-width:2px,font-size:16px;
+    class cliente actor;
+    class lepetit system;
+    class imagenes external;
+    linkStyle default stroke:#58708E,stroke-width:2px;

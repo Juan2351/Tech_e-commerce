@@ -1,63 +1,28 @@
-%%{init: {"theme":"base","themeVariables":{"fontFamily":"Aptos, Segoe UI, Arial, sans-serif","fontSize":"16px","primaryColor":"#EAF2FF","primaryTextColor":"#10233F","primaryBorderColor":"#3973B9","lineColor":"#58708E","secondaryColor":"#F1F5F9","tertiaryColor":"#E7F5F2","background":"#FFFFFF","mainBkg":"#FFFFFF","textColor":"#10233F","classText":"#10233F"}}}%%
-classDiagram
-    direction TB
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Aptos, Segoe UI, Arial, sans-serif","fontSize":"16px","primaryColor":"#EAF2FF","primaryTextColor":"#10233F","primaryBorderColor":"#3973B9","lineColor":"#58708E","secondaryColor":"#F1F5F9","tertiaryColor":"#E7F5F2","background":"#FFFFFF","mainBkg":"#FFFFFF","textColor":"#10233F"}}}%%
+flowchart LR
+    navegador["JavaScript<br/>sendCartRequest()<br/>Envía producto y cantidad"]
+    api["APIController<br/>add_cart_product()<br/>Valida la solicitud JSON"]
+    service["CartService<br/>add_product()<br/>Comprueba cantidad y stock"]
+    repository["CatalogRepository<br/>fetch_product()<br/>Busca el producto"]
+    database["DatabaseAdapter<br/>query_one()<br/>SQL parametrizado"]
+    mysql[("MySQL<br/>producto · marca<br/>subcategoría")]
+    session[("FlaskSession<br/>Cookie firmada<br/>productId → cantidad")]
+    product["Product<br/>id_producto · precio<br/>stock"]
 
-    class BrowserJavaScript {
-        +sendCartRequest(url, method, body)
-        +updateCartCount(count)
-        +showFeedback(message)
-    }
-    class APIController {
-        +add_cart_product()
-        +change_cart_product(productId)
-        +delete_cart_product(productId)
-    }
-    class CartService {
-        +add_product(cart, productId, quantity)
-        +update_quantity(cart, productId, quantity)
-        +cart_summary(cart)
-    }
-    class CatalogRepository {
-        +fetch_product(productId)
-        +fetch_products_by_ids(productIds)
-    }
-    class Product {
-        +id_producto: str
-        +precio: Decimal
-        +stock: int
-        +to_dict(rate)
-    }
-    class DatabaseAdapter {
-        +query_one(sql, params)
-        +query_all(sql, params)
-    }
-    class FlaskSession {
-        <<cookie firmada>>
-        cart: productId to quantity
-    }
-    class MySQL {
-        <<base de datos>>
-        producto
-        marca
-        subcategoria
-        categoria_principal
-    }
+    navegador -->|"POST · JSON"| api
+    api -->|"Delega validación"| service
+    service -->|"Consulta producto y stock"| repository
+    repository -->|"Ejecuta consulta"| database
+    database -->|"Protocolo MySQL"| mysql
+    repository -->|"Crea entidad"| product
+    api -->|"Guarda cantidad"| session
 
-    BrowserJavaScript --> APIController : POST JSON · HTTP
-    APIController --> CartService : valida operación
-    APIController --> FlaskSession : guarda cantidades
-    CartService --> CatalogRepository : verifica producto y stock
-    CatalogRepository --> Product : crea entidad
-    CatalogRepository --> DatabaseAdapter : SQL parametrizado
-    DatabaseAdapter --> MySQL : consulta de producto
-
-    classDef frontend fill:#EAF2FF,stroke:#3973B9,color:#10233F,stroke-width:2px;
-    classDef controller fill:#DDEBFA,stroke:#3973B9,color:#10233F,stroke-width:2px;
-    classDef service fill:#E7F5F2,stroke:#318477,color:#153E3A,stroke-width:2px;
-    classDef data fill:#FFF2D6,stroke:#C48A24,color:#4A3512,stroke-width:2px;
-    class BrowserJavaScript frontend;
-    class APIController controller;
-    class CartService service;
-    class CatalogRepository,Product service;
-    class DatabaseAdapter,MySQL data;
-    class FlaskSession frontend;
+    classDef frontend fill:#EAF2FF,stroke:#3973B9,color:#10233F,stroke-width:2px,font-size:16px;
+    classDef controller fill:#DDEBFA,stroke:#3973B9,color:#10233F,stroke-width:2px,font-size:16px;
+    classDef business fill:#E7F5F2,stroke:#318477,color:#153E3A,stroke-width:2px,font-size:16px;
+    classDef data fill:#FFF2D6,stroke:#C48A24,color:#4A3512,stroke-width:2px,font-size:16px;
+    class navegador frontend;
+    class api controller;
+    class service,repository,product business;
+    class database,mysql,session data;
+    linkStyle default stroke:#58708E,stroke-width:2px;
