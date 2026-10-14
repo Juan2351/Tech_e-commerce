@@ -1,3 +1,31 @@
+const productImageFallbacks = {
+    "Android Smartphones": "photo-1511707171634-5f897ff02aa9",
+    "iPhones (Apple)": "photo-1511707171634-5f897ff02aa9",
+    "Business Laptops": "photo-1496181133206-80ce9b88a853",
+    "General Laptops": "photo-1496181133206-80ce9b88a853",
+    "Gaming Laptops": "photo-1486572788966-cfd3df1f5b42",
+    "Desktop PCs & All-in-Ones": "photo-1496181133206-80ce9b88a853",
+    "Mini PCs": "photo-1496181133206-80ce9b88a853",
+    "Computer Mice": "photo-1527814050087-3793815479db",
+    "Keyboards": "photo-1587829741301-dc798b83add3",
+    "Earbuds & Headphones": "photo-1505740420928-5e560c06d30e",
+    "Monitors": "photo-1527443224154-c4a3942d3acf",
+    "Tablets & E-Ink": "photo-1544244015-0df4b3ffc6b0",
+    "Smartwatches": "photo-1523275335684-37898b6baf30",
+    "SSD & Networking": "photo-1496181133206-80ce9b88a853",
+    "Power & Docks": "photo-1496181133206-80ce9b88a853"
+};
+
+function categoryFallbackUrl(category) {
+    const photo = productImageFallbacks[category]
+        || (/console|game/i.test(category || "")
+            ? "photo-1486572788966-cfd3df1f5b42"
+            : null);
+    return photo
+        ? `https://images.unsplash.com/${photo}?auto=format&fit=crop&w=640&q=80`
+        : null;
+}
+
 async function sendCartRequest(url, method, body) {
     const options = {
         method,
@@ -29,7 +57,7 @@ async function checkDatabaseConnection() {
         });
         const result = await response.json();
         if (!response.ok || result.data?.connection !== true) {
-            throw new Error(result.error?.message || "MySQL no está disponible.");
+            throw new Error(result.error?.message || "La base de datos local no está disponible.");
         }
         badge.textContent = `Base de datos conectada · ${result.data.database}`;
         badge.classList.add("database-connected");
@@ -54,7 +82,29 @@ function updateCartCount(count) {
     });
 }
 
-document.addEventListener("DOMContentLoaded", checkDatabaseConnection);
+function applyImageFallback(image) {
+    if (!image.dataset.categoryFallback) {
+        image.dataset.categoryFallback = "true";
+        const fallbackUrl = categoryFallbackUrl(image.dataset.productCategory);
+        if (fallbackUrl) {
+            image.src = fallbackUrl;
+            return;
+        }
+    }
+    if (!image.dataset.localFallback) {
+        image.dataset.localFallback = "true";
+        image.src = "/static/img/product-placeholder.svg";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    checkDatabaseConnection();
+    document.querySelectorAll("img").forEach((image) => {
+        if (image.complete && image.naturalWidth === 0) {
+            applyImageFallback(image);
+        }
+    });
+});
 
 document.addEventListener("click", async (event) => {
     const addButton = event.target.closest("[data-cart-add]");
@@ -119,8 +169,6 @@ document.addEventListener("click", async (event) => {
 });
 
 document.addEventListener("error", (event) => {
-    if (event.target instanceof HTMLImageElement && !event.target.dataset.fallback) {
-        event.target.dataset.fallback = "true";
-        event.target.src = "/static/img/product-placeholder.svg";
-    }
+    if (!(event.target instanceof HTMLImageElement)) return;
+    applyImageFallback(event.target);
 }, true);

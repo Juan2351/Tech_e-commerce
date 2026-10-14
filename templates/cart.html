@@ -11,7 +11,7 @@
         {% for item in items %}
         <article class="cart-item">
             <img src="{{ item.product.image_url or url_for('static', filename='img/product-placeholder.svg') }}"
-                 alt="" loading="lazy">
+                 alt="" data-product-category="{{ item.product.subcategoria }}" loading="lazy">
             <div class="cart-product">
                 <h2><a href="{{ url_for('shop.product_detail', product_id=item.product.id_producto) }}">{{ item.product.nombre }}</a></h2>
                 <p>{{ item.product.precio|cop }} por unidad</p>

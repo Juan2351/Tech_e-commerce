@@ -4,12 +4,14 @@
 <p><a href="{{ url_for('shop.home') }}">&larr; Volver al catálogo</a></p>
 <article class="product-detail">
     <img src="{{ product.image_url or url_for('static', filename='img/product-placeholder.svg') }}"
-         alt="{{ product.nombre }}">
+         alt="{{ product.nombre }}" data-product-category="{{ product.subcategoria }}">
     <div>
         <p class="product-category">{{ product.categoria }} / {{ product.subcategoria }}</p>
         <h1>{{ product.nombre }}</h1>
         <p class="muted">Marca: {{ product.marca }}</p>
+        {% if product.descripcion %}
         <p>{{ product.descripcion }}</p>
+        {% endif %}
         <p class="price">{{ product.precio|cop }}</p>
         <p class="muted">Calificación {{ "%.1f"|format(product.rating) }} / 5 · {{ product.reviews_count }} reseñas</p>
         <p>Disponibles: {{ product.stock }}</p>

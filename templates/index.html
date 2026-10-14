@@ -3,14 +3,14 @@
 {% block content %}
 <section class="intro">
     <p class="eyebrow">LEPETIT · TIENDA EN LÍNEA</p>
-    <h1>Productos para tu día a día</h1>
-    <p>Explora el catálogo, filtra por categoría y agrega productos al carrito.</p>
+    <h1>Tecnología para tu día a día</h1>
+    <p>Encuentra laptops, teléfonos, PC y accesorios tecnológicos para tu equipo.</p>
 </section>
 
 <section id="catalogo" aria-labelledby="catalog-title">
     <div class="section-heading">
         <h2 id="catalog-title">Catálogo</h2>
-        <p>{{ products|length }} producto(s)</p>
+        <p>{{ total_products }} producto(s)</p>
     </div>
     <form class="filters" method="get" action="{{ url_for('shop.home') }}">
         <label>
@@ -45,7 +45,7 @@
         <article class="product-card">
             <a class="product-image" href="{{ url_for('shop.product_detail', product_id=product.id_producto) }}">
                 <img src="{{ product.image_url or url_for('static', filename='img/product-placeholder.svg') }}"
-                     alt="{{ product.nombre }}" loading="lazy">
+                     alt="{{ product.nombre }}" data-product-category="{{ product.subcategoria }}" loading="lazy">
             </a>
             <div class="product-info">
                 <p class="product-category">{{ product.categoria }} / {{ product.subcategoria }}</p>
@@ -61,6 +61,19 @@
         </article>
         {% endfor %}
     </div>
+    {% if total_pages > 1 %}
+    <nav class="pagination" aria-label="Paginación del catálogo">
+        {% if page > 1 %}
+        <a class="button button-secondary"
+           href="{{ url_for('shop.home', q=search or None, category_id=category_id, sort=sort, page=page - 1) }}">Anterior</a>
+        {% endif %}
+        <span>Página {{ page }} de {{ total_pages }}</span>
+        {% if page < total_pages %}
+        <a class="button button-secondary"
+           href="{{ url_for('shop.home', q=search or None, category_id=category_id, sort=sort, page=page + 1) }}">Siguiente</a>
+        {% endif %}
+    </nav>
+    {% endif %}
     {% else %}
     <p class="empty-state">No encontramos productos con esos filtros. Prueba otra búsqueda.</p>
     {% endif %}

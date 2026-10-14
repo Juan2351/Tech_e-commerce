@@ -6,6 +6,7 @@ from models import catalog
 from services.cart_service import cart_summary
 
 shop = Blueprint("shop", __name__)
+PRODUCTS_PER_PAGE = 24
 
 
 def cart_count(cart):
@@ -52,15 +53,25 @@ def home():
     sort = request.args.get("sort", "featured")
     if sort not in {"featured", "price_asc", "price_desc", "rating_desc"}:
         abort(400, description="El criterio de orden no es válido.")
-    products = catalog.fetch_products(category_id, subcategory_id, search, sort)
+    all_products = catalog.fetch_products(category_id, subcategory_id, search, sort)
+    total_products = len(all_products)
+    page = parse_optional_id(request.args.get("page"), "page") or 1
+    total_pages = max(1, (total_products + PRODUCTS_PER_PAGE - 1) // PRODUCTS_PER_PAGE)
+    if page > total_pages:
+        abort(404, description="La página solicitada no existe.")
+    start = (page - 1) * PRODUCTS_PER_PAGE
+    products = all_products[start:start + PRODUCTS_PER_PAGE]
     return render_template(
         "index.html",
         categories=categories,
         products=products,
+        total_products=total_products,
         category_id=category_id,
         subcategory_id=subcategory_id,
         search=search,
         sort=sort,
+        page=page,
+        total_pages=total_pages,
         cart_count=cart_count(session.get("cart", {})),
     )
 
