@@ -32,7 +32,7 @@ def fetch_subcategories(main_category_id=None):
     """
     params = ()
     if main_category_id is not None:
-        sql += " WHERE id_main_cat = %s"
+        sql += " WHERE id_main_cat = ?"
         params = (main_category_id,)
     sql += " ORDER BY nombre"
     return query_all(sql, params)
@@ -42,13 +42,13 @@ def fetch_products(category_id=None, subcategory_id=None, search=None, sort="fea
     sql = PRODUCT_SELECT + " WHERE 1 = 1"
     params = []
     if category_id is not None:
-        sql += " AND c.id_main_cat = %s"
+        sql += " AND c.id_main_cat = ?"
         params.append(category_id)
     if subcategory_id is not None:
-        sql += " AND p.id_subcat = %s"
+        sql += " AND p.id_subcat = ?"
         params.append(subcategory_id)
     if search:
-        sql += " AND (p.nombre LIKE %s OR p.descripcion LIKE %s OR m.nombre LIKE %s)"
+        sql += " AND (p.nombre LIKE ? OR p.descripcion LIKE ? OR m.nombre LIKE ?)"
         pattern = f"%{search}%"
         params.extend((pattern, pattern, pattern))
 
@@ -65,7 +65,7 @@ def fetch_products(category_id=None, subcategory_id=None, search=None, sort="fea
 
 def fetch_product(product_id):
     row = query_one(
-        PRODUCT_SELECT + " WHERE p.id_producto = %s",
+        PRODUCT_SELECT + " WHERE p.id_producto = ?",
         (product_id,),
     )
     return Product.from_row(row) if row else None
@@ -74,7 +74,7 @@ def fetch_product(product_id):
 def fetch_products_by_ids(product_ids):
     if not product_ids:
         return []
-    placeholders = ", ".join(["%s"] * len(product_ids))
+    placeholders = ", ".join(["?"] * len(product_ids))
     rows = query_all(
         PRODUCT_SELECT + f" WHERE p.id_producto IN ({placeholders})",
         tuple(product_ids),

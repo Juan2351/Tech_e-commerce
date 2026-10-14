@@ -1,8 +1,8 @@
 from decimal import Decimal, InvalidOperation
+import sqlite3
 
 from flask import Flask, jsonify, render_template, request
 from werkzeug.exceptions import HTTPException
-import mysql.connector
 
 from configs.settings import BASE_DIR, Config
 from controllers.api_controller import api
@@ -43,10 +43,10 @@ def create_app(test_config=None):
         return render_template("error.html", message=error.description), error.code
 
     @app.errorhandler(DatabaseConfigurationError)
-    @app.errorhandler(mysql.connector.Error)
+    @app.errorhandler(sqlite3.Error)
     def handle_database_error(error):
-        app.logger.exception("La operación requiere una base de datos disponible.")
-        message = "No fue posible conectar con la base de datos. Revisa la configuración."
+        app.logger.exception("No fue posible consultar la base de datos local.")
+        message = "No fue posible abrir la base de datos local. Revisa el catálogo CSV."
         if request.path.startswith("/api/"):
             return jsonify({
                 "error": {"code": "database_unavailable", "message": message}

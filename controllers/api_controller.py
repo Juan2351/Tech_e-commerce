@@ -1,4 +1,5 @@
 from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
 
 from flask import Blueprint, current_app, jsonify, request, session
 
@@ -14,13 +15,13 @@ def database_health():
     result = query_one("SELECT 1 AS connection_ok")
     if not result or result["connection_ok"] != 1:
         raise DatabaseConfigurationError(
-            "La consulta de verificación no confirmó la conexión MySQL."
+            "La consulta de verificación no confirmó la conexión SQLite."
         )
     return jsonify({
         "data": {
             "status": "ok",
-            "database": current_app.config["DB_NAME"],
-            "engine": "MySQL",
+            "database": Path(current_app.config["DATABASE_PATH"]).name,
+            "engine": "SQLite",
             "connection": True,
             "usd_to_cop_rate": str(current_rate()),
         }

@@ -1,5 +1,3 @@
-USE lepetit;
-
 -- Catálogo con marca, subcategoría y categoría principal.
 SELECT p.id_producto, p.nombre, p.precio, p.stock, p.rating,
        m.nombre AS marca, s.nombre AS subcategoria,
