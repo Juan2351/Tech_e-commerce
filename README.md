@@ -296,10 +296,3 @@ python -m unittest discover -s tests -v
 
 Los tests automatizados comprueban formato API, filtros, errores de validación, stock, carrito, renderizado de precios e importación del CSV a SQLite.
 
-## Equipo indicado en las guías
-
-- **Actividad Git, Grupo Ying Yang:** Juan Alberto Trujillo Herrera, Martín Camilo Corredor Pescador y Rubén Darío Peña.
-- **Actividad de base de datos, Grupo Matrix:** Juan José Herrera, Francisco Manuel Bermúdez y Rafael Ángel Hernández.
-- **Cuenta GitHub facilitada:** CrisArbo.
-
-Los integrantes se listan porque aparecen en las instrucciones compartidas; el equipo debe confirmar si ambos grupos trabajan sobre el mismo repositorio antes de asignar responsabilidades.
