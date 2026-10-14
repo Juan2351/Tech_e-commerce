@@ -19,7 +19,7 @@ LePetit es una tienda web de demostración para consultar un catálogo de produc
 | Presentación | HTML5 semántico y Jinja | Las páginas se renderizan desde el servidor. |
 | Interacción del navegador | JavaScript sin framework | La API REST gestiona el carrito sin recargar la página al agregar. |
 | Estilos | CSS propio mínimo | Paleta blanca, gris y negra, adaptable a pantallas pequeñas y efectos hover discretos. |
-| Persistencia | MySQL 8 e InnoDB | Modelo relacional preparado para ejecución y consulta desde DBeaver. |
+| Persistencia | MySQL 8  | Modelo relacional preparado para ejecución y consulta desde DBeaver. |
 | Acceso a datos | `mysql-connector-python` y SQL parametrizado | Evita sumar ORM al prototipo y deja visibles el DDL y las relaciones SQL. |
 | Configuración | `.env` local y `python-dotenv` | Las credenciales no se escriben en el código ni se suben al repositorio. |
 | Documentación | Mermaid y OpenAPI 3.0 | Fuentes editables para C1-C4, modelo relacional y contrato HTTP. |
