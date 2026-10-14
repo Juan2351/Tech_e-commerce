@@ -7,7 +7,7 @@ flowchart LR
         carrito["Servicio de carrito<br/>cart_service.py<br/>Valida cantidad y disponibilidad"]
         catalogo["Repositorio de catálogo<br/>catalog.py<br/>Consulta productos y categorías"]
         producto["Modelo Product<br/>entities.py<br/>Representa y serializa productos"]
-        database["Adaptador MySQL<br/>database.py<br/>Ejecuta SQL parametrizado"]
+        database["Adaptador SQLite<br/>database.py<br/>Ejecuta SQL parametrizado"]
 
         tienda -->|"Lee productos"| catalogo
         tienda -->|"Resume"| carrito
@@ -17,8 +17,8 @@ flowchart LR
         catalogo -->|"Solicita datos"| database
     end
 
-    mysql[("MySQL 8<br/>Productos, marcas<br/>y categorías")]
-    database -->|"Consulta · SQL"| mysql
+    sqlite[("SQLite local<br/>Productos, marcas<br/>y categorías")]
+    database -->|"Consulta · SQL"| sqlite
 
     classDef controller fill:#EAF2FF,stroke:#3973B9,color:#10233F,stroke-width:2px,font-size:16px;
     classDef service fill:#E7F5F2,stroke:#318477,color:#153E3A,stroke-width:2px,font-size:16px;
@@ -27,6 +27,6 @@ flowchart LR
     class tienda,api controller;
     class carrito,catalogo service;
     class producto model;
-    class database,mysql dbcomponent;
+    class database,sqlite dbcomponent;
     style backend fill:#F8FAFC,stroke:#7B8DA4,stroke-width:2px,color:#10233F
     linkStyle default stroke:#58708E,stroke-width:2px;

@@ -6,9 +6,9 @@ flowchart LR
         direction LR
         navegador["Navegador web<br/>HTML · CSS · JavaScript<br/>Muestra la tienda y consume la API"]
         aplicacion["Aplicación web<br/>Python · Flask · Jinja<br/>Entrega páginas y valida operaciones"]
-        mysql[("Base de datos<br/>MySQL 8<br/>Productos, marcas y categorías")]
+        sqlite[("Base de datos local<br/>SQLite<br/>Catálogo, marcas y categorías")]
         navegador -->|"HTML y API JSON<br/>HTTP local · HTTPS en despliegue"| aplicacion
-        aplicacion -->|"Consulta catálogo · SQL"| mysql
+        aplicacion -->|"Consulta catálogo · SQL"| sqlite
     end
 
     cdn[("CDN de imágenes<br/>Servicio externo · HTTPS")]
@@ -24,6 +24,6 @@ flowchart LR
     class cliente actor;
     class navegador frontend;
     class aplicacion backend;
-    class mysql database;
+    class sqlite database;
     class cdn external;
     linkStyle default stroke:#58708E,stroke-width:2px;

@@ -1,35 +1,36 @@
-%%{init: {"theme":"base","themeVariables":{"fontFamily":"Aptos, Segoe UI, Arial, sans-serif","fontSize":"16px","primaryColor":"#EAF2FF","primaryTextColor":"#10233F","primaryBorderColor":"#3973B9","lineColor":"#58708E","secondaryColor":"#F1F5F9","tertiaryColor":"#E7F5F2","background":"#FFFFFF","mainBkg":"#FFFFFF","textColor":"#10233F"}}}%%
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, sans-serif","fontSize":"12px","primaryColor":"#EAF2FF","primaryTextColor":"#10233F","primaryBorderColor":"#3973B9","lineColor":"#58708E","secondaryColor":"#F1F5F9","tertiaryColor":"#E7F5F2","background":"#FFFFFF","mainBkg":"#FFFFFF","textColor":"#10233F"}}}%%
 erDiagram
+    direction LR
     marca ||--o{ producto : "posee"
     categoria_principal ||--|{ subcategoria : "contiene"
     subcategoria ||--o{ producto : "clasifica"
 
     marca {
-        INT id_marca PK
-        VARCHAR nombre UK
+        INTEGER id_marca PK
+        TEXT nombre UK
     }
 
     categoria_principal {
-        INT id_main_cat PK
-        VARCHAR nombre UK
+        INTEGER id_main_cat PK
+        TEXT nombre UK
     }
 
     subcategoria {
-        INT id_subcat PK
-        INT id_main_cat FK
-        VARCHAR nombre
+        INTEGER id_subcat PK
+        INTEGER id_main_cat FK
+        TEXT nombre
     }
 
     producto {
-        VARCHAR id_producto PK
-        VARCHAR nombre
+        TEXT id_producto PK
+        TEXT nombre
         TEXT descripcion
-        DECIMAL precio "USD base"
-        DECIMAL rating
-        INT reviews_count
-        INT stock
-        VARCHAR url
-        VARCHAR image_url
-        INT id_marca FK
-        INT id_subcat FK
+        NUMERIC precio "USD base"
+        NUMERIC rating "0 a 5"
+        INTEGER reviews_count
+        INTEGER stock
+        TEXT url
+        TEXT image_url
+        INTEGER id_marca FK
+        INTEGER id_subcat FK
     }

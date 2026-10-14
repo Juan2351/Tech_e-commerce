@@ -5,7 +5,7 @@ flowchart LR
     service["CartService<br/>add_product()<br/>Comprueba cantidad y stock"]
     repository["CatalogRepository<br/>fetch_product()<br/>Busca el producto"]
     database["DatabaseAdapter<br/>query_one()<br/>SQL parametrizado"]
-    mysql[("MySQL<br/>producto · marca<br/>subcategoría")]
+    sqlite[("SQLite<br/>producto · marca<br/>subcategoría")]
     session[("FlaskSession<br/>Cookie firmada<br/>productId → cantidad")]
     product["Product<br/>id_producto · precio<br/>stock"]
 
@@ -13,7 +13,7 @@ flowchart LR
     api -->|"Delega validación"| service
     service -->|"Consulta producto y stock"| repository
     repository -->|"Ejecuta consulta"| database
-    database -->|"Protocolo MySQL"| mysql
+    database -->|"Consulta SQL"| sqlite
     repository -->|"Crea entidad"| product
     api -->|"Guarda cantidad"| session
 
@@ -24,5 +24,5 @@ flowchart LR
     class navegador frontend;
     class api controller;
     class service,repository,product business;
-    class database,mysql,session data;
+    class database,sqlite,session data;
     linkStyle default stroke:#58708E,stroke-width:2px;
