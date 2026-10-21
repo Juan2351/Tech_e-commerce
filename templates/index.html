@@ -1,81 +1,363 @@
 {% extends "base.html" %}
-{% block title %}Catálogo | LePetit{% endblock %}
+{% block title %}LePetit | Tecnología, Cómputo y Accesorios{% endblock %}
+
 {% block content %}
-<section class="intro">
-    <p class="eyebrow">LEPETIT · TIENDA EN LÍNEA</p>
-    <h1>Tecnología para tu día a día</h1>
-    <p>Encuentra laptops, teléfonos, PC y accesorios tecnológicos para tu equipo.</p>
+<!-- 1. HERO LANDING SECTION (2 COLUMNAS: TÍTULO + IMAGEN DE ALTO RENDIMIENTO) -->
+<section class="landing-hero" aria-label="Bienvenida a LePetit">
+    <div class="hero-container">
+        <div class="hero-col-text">
+            <span class="hero-badge-tag">TECNOLOGÍA DE ALTO RENDIMIENTO</span>
+            <h1>Tecnología profesional para tu trabajo y estilo de vida</h1>
+            <p class="hero-lead">
+                Portátiles ejecutivos, smartphones, computadores y periféricos de alto desempeño. Garantía directa oficial, asesoría técnica especializada y cobertura de envíos asegurados a toda Colombia.
+            </p>
+            <div class="hero-actions">
+                <a class="button button-hero" href="{{ url_for('shop.shop_view') }}">Ir a la Tienda</a>
+                <a class="button button-secondary" href="#destacados">Productos Populares</a>
+            </div>
+            <div class="hero-trust-badges">
+                <div class="trust-badge-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span>Garantía Oficial Directa</span>
+                </div>
+                <div class="trust-badge-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    <span>Despachos Asegurados</span>
+                </div>
+                <div class="trust-badge-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <span>Equipos Originales</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-col-image">
+            <div class="hero-image-wrapper">
+                <img src="{{ url_for('static', filename='img/hero-tech.jpg') }}" 
+                     alt="Estación de trabajo moderna con laptop y periféricos tecnológicos" 
+                     class="hero-tech-img"
+                     loading="eager">
+                <div class="hero-img-floating-card">
+                    <div class="floating-card-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div>
+                        <strong>Equipos Nuevos y Verificados</strong>
+                        <span>Distribución directa con soporte</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 
-<section id="catalogo" aria-labelledby="catalog-title">
-    <div class="section-heading">
-        <h2 id="catalog-title">Catálogo</h2>
-        <p>{{ total_products }} producto(s)</p>
+<!-- 2. CAROUSEL DE CATEGORÍAS -->
+<section id="categorias" class="section-container" aria-labelledby="categories-heading">
+    <div class="section-header-row">
+        <div>
+            <p class="section-subtitle">LÍNEAS DE PRODUCTO</p>
+            <h2 id="categories-heading">Categorías Principales</h2>
+        </div>
+        <div class="carousel-nav-buttons">
+            <button class="carousel-arrow" type="button" aria-label="Categoría anterior" data-carousel-prev="categories-track">‹</button>
+            <button class="carousel-arrow" type="button" aria-label="Siguiente categoría" data-carousel-next="categories-track">›</button>
+        </div>
     </div>
-    <form class="filters" method="get" action="{{ url_for('shop.home') }}">
-        <label>
-            Buscar
-            <input type="search" name="q" value="{{ search }}" maxlength="100" placeholder="Producto o marca">
-        </label>
-        <label>
-            Categoría
-            <select name="category_id">
-                <option value="">Todas</option>
-                {% for category in categories %}
-                <option value="{{ category.id_main_cat }}" {% if category_id == category.id_main_cat %}selected{% endif %}>{{ category.nombre }}</option>
-                {% endfor %}
-            </select>
-        </label>
-        <label>
-            Ordenar
-            <select name="sort">
-                <option value="featured" {% if sort == "featured" %}selected{% endif %}>Destacados</option>
-                <option value="price_asc" {% if sort == "price_asc" %}selected{% endif %}>Precio: menor a mayor</option>
-                <option value="price_desc" {% if sort == "price_desc" %}selected{% endif %}>Precio: mayor a menor</option>
-                <option value="rating_desc" {% if sort == "rating_desc" %}selected{% endif %}>Mejor calificados</option>
-            </select>
-        </label>
-        <button type="submit">Aplicar filtros</button>
-        <a class="button button-secondary" href="{{ url_for('shop.home') }}">Limpiar</a>
-    </form>
 
-    {% if products %}
-    <div class="product-grid">
-        {% for product in products %}
-        <article class="product-card">
-            <a class="product-image" href="{{ url_for('shop.product_detail', product_id=product.id_producto) }}">
-                <img src="{{ product.image_url or url_for('static', filename='img/product-placeholder.svg') }}"
-                     alt="{{ product.nombre }}" data-product-category="{{ product.subcategoria }}" loading="lazy">
+    <div class="carousel-container">
+        <div class="carousel-track" id="categories-track" tabindex="0" role="region" aria-label="Carrusel de categorías">
+            {% for cat in categories %}
+            <a class="category-card" href="{{ url_for('shop.shop_view', category_id=cat.id_main_cat) }}">
+                <div class="category-icon-wrapper">
+                    {% if "smartphone" in cat.nombre.lower() or "teléfono" in cat.nombre.lower() %}
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                    {% elif "laptop" in cat.nombre.lower() or "notebook" in cat.nombre.lower() %}
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+                    {% elif "mini pc" in cat.nombre.lower() or "desktop" in cat.nombre.lower() %}
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                    {% elif "monitor" in cat.nombre.lower() or "display" in cat.nombre.lower() %}
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    {% elif "audio" in cat.nombre.lower() or "headphone" in cat.nombre.lower() %}
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                    {% elif "mice" in cat.nombre.lower() or "keyboard" in cat.nombre.lower() %}
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg>
+                    {% elif "tablet" in cat.nombre.lower() %}
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                    {% elif "watch" in cat.nombre.lower() %}
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="7" width="14" height="10" rx="2"/><path d="M9 7V3h6v4M9 17v4h6v-4"/></svg>
+                    {% elif "storage" in cat.nombre.lower() %}
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                    {% else %}
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    {% endif %}
+                </div>
+                <h3>{{ cat.nombre }}</h3>
+                <span class="category-cta">Explorar línea &rarr;</span>
             </a>
-            <div class="product-info">
-                <p class="product-category">{{ product.categoria }} / {{ product.subcategoria }}</p>
-                <h3><a href="{{ url_for('shop.product_detail', product_id=product.id_producto) }}">{{ product.nombre }}</a></h3>
-                <p class="muted">{{ product.marca }} · {{ "%.1f"|format(product.rating) }} / 5 ({{ product.reviews_count }} reseñas)</p>
-                <p class="price">{{ product.precio|cop }}</p>
-                <p class="muted">Disponibles: {{ product.stock }}</p>
-                <button type="button" data-cart-add data-product-id="{{ product.id_producto }}"
-                        data-quantity="1" {% if product.stock < 1 %}disabled{% endif %}>
-                    {% if product.stock > 0 %}Agregar al carrito{% else %}Agotado{% endif %}
-                </button>
-            </div>
-        </article>
-        {% endfor %}
+            {% endfor %}
+        </div>
     </div>
-    {% if total_pages > 1 %}
-    <nav class="pagination" aria-label="Paginación del catálogo">
-        {% if page > 1 %}
-        <a class="button button-secondary"
-           href="{{ url_for('shop.home', q=search or None, category_id=category_id, sort=sort, page=page - 1) }}">Anterior</a>
-        {% endif %}
-        <span>Página {{ page }} de {{ total_pages }}</span>
-        {% if page < total_pages %}
-        <a class="button button-secondary"
-           href="{{ url_for('shop.home', q=search or None, category_id=category_id, sort=sort, page=page + 1) }}">Siguiente</a>
-        {% endif %}
-    </nav>
-    {% endif %}
-    {% else %}
-    <p class="empty-state">No encontramos productos con esos filtros. Prueba otra búsqueda.</p>
-    {% endif %}
+</section>
+
+<!-- 3. CAROUSEL DE PRODUCTOS MÁS COMPRADOS -->
+{% if top_products %}
+<section id="destacados" class="section-container" aria-labelledby="featured-heading">
+    <div class="section-header-row">
+        <div>
+            <p class="section-subtitle">LO MÁS SOLICITADO</p>
+            <h2 id="featured-heading">Productos Más Comprados</h2>
+        </div>
+        <div class="carousel-nav-buttons">
+            <button class="carousel-arrow" type="button" aria-label="Producto anterior" data-carousel-prev="featured-track">‹</button>
+            <button class="carousel-arrow" type="button" aria-label="Siguiente producto" data-carousel-next="featured-track">›</button>
+        </div>
+    </div>
+
+    <div class="carousel-container">
+        <div class="carousel-track products-carousel-track" id="featured-track" tabindex="0" role="region" aria-label="Carrusel de productos destacados">
+            {% for product in top_products %}
+            <article class="carousel-product-card">
+                <span class="badge-featured">Top Ventas</span>
+                <a class="carousel-product-img" href="{{ url_for('shop.product_detail', product_id=product.id_producto) }}">
+                    <img src="{{ product.image_url or url_for('static', filename='img/product-placeholder.svg') }}"
+                         alt="{{ product.nombre }}" data-product-category="{{ product.subcategoria }}" loading="lazy">
+                </a>
+                <div class="carousel-product-info">
+                    <p class="product-category">{{ product.categoria }}</p>
+                    <h3 title="{{ product.nombre }}">
+                        <a href="{{ url_for('shop.product_detail', product_id=product.id_producto) }}">{{ product.nombre }}</a>
+                    </h3>
+                    <div class="rating-row">
+                        <span class="rating-badge-score">Calificación: {{ "%.1f"|format(product.rating) }} / 5</span>
+                        <span class="muted small">({{ product.reviews_count }} reseñas)</span>
+                    </div>
+                    <p class="price">{{ product.precio|cop }}</p>
+                    <button type="button" class="button-sm card-add-button" data-cart-add data-product-id="{{ product.id_producto }}"
+                            data-quantity="1" {% if product.stock < 1 %}disabled{% endif %}>
+                        {% if product.stock > 0 %}Agregar al carrito{% else %}Agotado{% endif %}
+                    </button>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- 4. BENEFICIOS Y PROPUESTA DE VALOR (SIN EMOJIS, CON SVG LIMPIOS) -->
+<section class="benefits-section" aria-label="Beneficios corporativos de LePetit">
+    <div class="benefits-grid">
+        <div class="benefit-card">
+            <div class="benefit-icon-svg">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <h3>Envíos Asegurados</h3>
+            <p>Despachos a toda Colombia con embalaje de alta seguridad y cobertura completa de transporte.</p>
+        </div>
+        <div class="benefit-card">
+            <div class="benefit-icon-svg">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3>Garantía Certificada</h3>
+            <p>Respaldo técnico por 12 meses directamente con distribuidores autorizados en cada dispositivo.</p>
+        </div>
+        <div class="benefit-card">
+            <div class="benefit-icon-svg">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <h3>Transparencia en Precios</h3>
+            <p>Conversión exacta a pesos colombianos (COP), sin cargos ocultos ni aranceles de importación sorpresa.</p>
+        </div>
+        <div class="benefit-card">
+            <div class="benefit-icon-svg">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <h3>Asesoría Especializada</h3>
+            <p>Soporte técnico y orientación profesional personalizada para seleccionar la tecnología adecuada.</p>
+        </div>
+    </div>
+</section>
+
+<!-- 5. BANNER LLAMADO A LA ACCIÓN A LA TIENDA -->
+<section class="store-cta-banner">
+    <div class="store-cta-content">
+        <h2>¿Buscas un equipo específico o deseas comparar especificaciones?</h2>
+        <p>Accede a nuestro catálogo completo con filtros por categoría, marca, precio y disponibilidad inmediata.</p>
+        <a class="button button-hero" href="{{ url_for('shop.shop_view') }}">Explorar Tienda Completa &rarr;</a>
+    </div>
+</section>
+
+<!-- 6. RESEÑAS Y OPINIONES DE CLIENTES VERIFICADOS -->
+<section id="resenas" class="section-container reviews-section" aria-labelledby="reviews-heading">
+    <div class="section-header-row">
+        <div>
+            <p class="section-subtitle">EXPERIENCIAS REALES</p>
+            <h2 id="reviews-heading">Opiniones de Clientes Verificados</h2>
+        </div>
+        <div class="reviews-aggregate-summary">
+            <div class="reviews-score-badge">
+                <span class="reviews-score-num">4.9</span>
+                <div class="reviews-score-stars">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+            </div>
+            <span class="reviews-aggregate-label">98% de satisfacción en despachos a Colombia</span>
+        </div>
+    </div>
+
+    <div class="reviews-grid">
+        <div class="review-card">
+            <div class="review-stars-row" aria-label="Calificación 5 de 5 estrellas">
+                <div class="stars-icons">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <span class="review-date">Hace 3 días</span>
+            </div>
+            <p class="review-text">"Compramos un lote de portátiles Lenovo para el área de desarrollo. Todo llegó perfectamente sellado, la factura electrónica se emitió de inmediato y el servicio al cliente respondió de forma rápida."</p>
+            <div class="review-author">
+                <div class="review-avatar">AM</div>
+                <div class="review-author-info">
+                    <strong>Andrés Montoya C.</strong>
+                    <span class="review-badge-verified">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        Compra Verificada · Medellín
+                    </span>
+                    <span class="review-product-tag">Lenovo V15 Business Laptop</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="review-card">
+            <div class="review-stars-row" aria-label="Calificación 5 de 5 estrellas">
+                <div class="stars-icons">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <span class="review-date">Hace 1 semana</span>
+            </div>
+            <p class="review-text">"Excelente orientación técnica previa. Me ayudaron a elegir el monitor adecuado para edición fotográfica y arquitectura. Llegó en 48 horas con el embalaje de alta seguridad intacto."</p>
+            <div class="review-author">
+                <div class="review-avatar">CR</div>
+                <div class="review-author-info">
+                    <strong>Carolina Restrepo</strong>
+                    <span class="review-badge-verified">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        Compra Verificada · Bogotá
+                    </span>
+                    <span class="review-product-tag">Monitor IPS 27" 4K</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="review-card">
+            <div class="review-stars-row" aria-label="Calificación 5 de 5 estrellas">
+                <div class="stars-icons">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <span class="review-date">Hace 2 semanas</span>
+            </div>
+            <p class="review-text">"La potencia de la Mini PC Ryzen 7 superó mis expectativas. Silenciosa, compacta y muy rápida. Destaco la seriedad de contar con garantía directa oficial sin trámites engorrosos."</p>
+            <div class="review-author">
+                <div class="review-avatar">DV</div>
+                <div class="review-author-info">
+                    <strong>David Valencia M.</strong>
+                    <span class="review-badge-verified">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        Compra Verificada · Cali
+                    </span>
+                    <span class="review-product-tag">ACEMAGIC AMD Ryzen 7 Mini PC</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 7. INFORMACIÓN DE CONTACTO FUNCIONAL -->
+<section id="contacto" class="contact-section" aria-labelledby="contact-heading">
+    <div class="contact-card-box">
+        <div class="contact-info-col">
+            <p class="section-subtitle">CANALES CORPORATIVOS</p>
+            <h2 id="contact-heading">Información de Contacto</h2>
+            <p class="contact-lead">
+                Comunícate con nuestro departamento de ventas y soporte corporativo para asesoría especializada o requerimientos particulares.
+            </p>
+
+            <div class="contact-details-list">
+                <div class="contact-detail-item">
+                    <span class="contact-icon-svg">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    </span>
+                    <div>
+                        <strong>Sede Principal</strong>
+                        <p>Carrera 43A # 1-50, Centro Empresarial Santillana, Medellín, Colombia</p>
+                    </div>
+                </div>
+                <div class="contact-detail-item">
+                    <span class="contact-icon-svg">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    </span>
+                    <div>
+                        <strong>Línea Telefónica & Atención</strong>
+                        <p><a href="tel:+573001234567">+57 (300) 123-4567</a></p>
+                    </div>
+                </div>
+                <div class="contact-detail-item">
+                    <span class="contact-icon-svg">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </span>
+                    <div>
+                        <strong>Correo Institucional</strong>
+                        <p><a href="mailto:contacto@lepetit.com">contacto@lepetit.com</a></p>
+                    </div>
+                </div>
+                <div class="contact-detail-item">
+                    <span class="contact-icon-svg">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </span>
+                    <div>
+                        <strong>Horario de Operación</strong>
+                        <p>Lunes a Viernes: 8:00 AM – 7:00 PM<br>Sábados: 9:00 AM – 4:00 PM</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="contact-form-col">
+            <h3>Envíanos un Mensaje</h3>
+            <form class="contact-form" method="post" action="{{ url_for('shop.contact') }}">
+                <label>
+                    Nombre Completo
+                    <input type="text" name="nombre" placeholder="Ej. Carlos Mendoza" required maxlength="80">
+                </label>
+                <label>
+                    Correo Electrónico
+                    <input type="email" name="email" placeholder="carlos@correo.com" required maxlength="100">
+                </label>
+                <label>
+                    Asunto de la Consulta
+                    <input type="text" name="asunto" placeholder="Cotización empresarial / Consulta técnica" maxlength="120">
+                </label>
+                <label>
+                    Mensaje
+                    <textarea name="mensaje" rows="4" placeholder="Escribe los detalles de tu consulta..." required maxlength="500"></textarea>
+                </label>
+                <button type="submit" class="button button-contact">Enviar Mensaje</button>
+            </form>
+        </div>
+    </div>
 </section>
 {% endblock %}

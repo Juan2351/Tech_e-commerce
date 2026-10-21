@@ -43,6 +43,19 @@ def to_cop(value):
 @shop.get("/")
 def home():
     categories = catalog.fetch_categories()
+    top_products = catalog.fetch_top_products(limit=10)
+    return render_template(
+        "index.html",
+        categories=categories,
+        top_products=top_products,
+        cart_count=cart_count(session.get("cart", {})),
+    )
+
+
+@shop.get("/tienda")
+@shop.get("/catalogo")
+def shop_view():
+    categories = catalog.fetch_categories()
     category_id = parse_optional_id(request.args.get("category_id"), "category_id")
     subcategory_id = parse_optional_id(
         request.args.get("subcategory_id"), "subcategory_id"
@@ -62,7 +75,7 @@ def home():
     start = (page - 1) * PRODUCTS_PER_PAGE
     products = all_products[start:start + PRODUCTS_PER_PAGE]
     return render_template(
-        "index.html",
+        "shop.html",
         categories=categories,
         products=products,
         total_products=total_products,
@@ -74,6 +87,13 @@ def home():
         total_pages=total_pages,
         cart_count=cart_count(session.get("cart", {})),
     )
+
+
+@shop.post("/contacto")
+def contact():
+    nombre = request.form.get("nombre", "Estimado cliente").strip()
+    flash(f"¡Gracias por tu mensaje, {nombre}! Nos pondremos en contacto contigo lo antes posible.", "success")
+    return redirect(url_for("shop.home") + "#contacto")
 
 
 @shop.get("/productos/<string:product_id>")

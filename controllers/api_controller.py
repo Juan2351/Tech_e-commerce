@@ -12,6 +12,22 @@ api = Blueprint("api", __name__, url_prefix="/api/v1")
 
 @api.get("/salud")
 def database_health():
+    backend = current_app.config.get("DATABASE_BACKEND", "firebase")
+    if not current_app.config.get("TESTING") and backend.lower() == "firebase":
+        from models.firebase_db import FirebaseDB
+        ok = FirebaseDB.ping()
+        if not ok:
+            raise DatabaseConfigurationError("No fue posible confirmar la conexión con Firebase.")
+        return jsonify({
+            "data": {
+                "status": "ok",
+                "database": "lepetit-e4386 (Firebase RTDB)",
+                "engine": "Firebase Realtime Database",
+                "connection": True,
+                "usd_to_cop_rate": str(current_rate()),
+            }
+        })
+
     result = query_one("SELECT 1 AS connection_ok")
     if not result or result["connection_ok"] != 1:
         raise DatabaseConfigurationError(

@@ -1,0 +1,142 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Dashboard | LePetit Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-dashboard-container">
+    <div class="admin-page-header">
+        <div>
+            <h1>Panel de Control</h1>
+            <p class="muted">Métricas consolidadas y control general de inventario sincronizado con Firebase.</p>
+        </div>
+        <div class="admin-header-actions">
+            <a class="button" href="{{ url_for('admin.product_create') }}">+ Nuevo Producto</a>
+            <a class="button button-secondary" href="{{ url_for('admin.categories_manage') }}">Gestionar Categorías</a>
+        </div>
+    </div>
+
+    <!-- STATS CARDS -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <span class="stat-label">Total Productos</span>
+                <span class="stat-badge">Catálogo</span>
+            </div>
+            <span class="stat-number">{{ stats.total_products }}</span>
+            <div class="stat-footer">
+                <a class="stat-link" href="{{ url_for('admin.products_list') }}">Ver inventario &rarr;</a>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <span class="stat-label">Categorías</span>
+                <span class="stat-badge">Líneas</span>
+            </div>
+            <span class="stat-number">{{ stats.total_categories }}</span>
+            <div class="stat-footer">
+                <a class="stat-link" href="{{ url_for('admin.categories_manage') }}">Configurar &rarr;</a>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <span class="stat-label">Clientes Registrados</span>
+                <span class="stat-badge">Usuarios</span>
+            </div>
+            <span class="stat-number">{{ stats.total_clients }}</span>
+            <div class="stat-footer">
+                <a class="stat-link" href="{{ url_for('admin.clients_list') }}">Ver listado &rarr;</a>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <span class="stat-label">Existencias en Stock</span>
+                <span class="stat-badge">Unidades</span>
+            </div>
+            <span class="stat-number">{{ "{:,}".format(stats.total_stock) }}</span>
+            <div class="stat-footer">
+                <span class="stat-sub">Valoración: ${{ "{:,.2f}".format(stats.total_value_usd) }} USD</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN TWO COLUMN PANELS -->
+    <div class="admin-two-cols">
+        <!-- PRODUCTOS CON MAYOR DEMANDA -->
+        <div class="admin-panel">
+            <div class="admin-panel-header">
+                <h2>Productos con Mayor Calificación y Reseñas</h2>
+                <a class="link-sm" href="{{ url_for('admin.products_list') }}">Ver todos</a>
+            </div>
+            <div class="admin-table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in recent_products %}
+                        <tr>
+                            <td class="product-cell">
+                                <strong>{{ product.nombre[:45] }}{% if product.nombre|length > 45 %}...{% endif %}</strong>
+                                <span class="muted small d-block">{{ product.id_producto }}</span>
+                            </td>
+                            <td>{{ product.categoria }}</td>
+                            <td>{{ product.precio|cop }}</td>
+                            <td>
+                                <span class="badge {% if product.stock < 15 %}badge-warning{% else %}badge-success{% endif %}">
+                                    {{ product.stock }} uds.
+                                </span>
+                            </td>
+                            <td>
+                                <a class="button-action" href="{{ url_for('admin.product_edit', product_id=product.id_producto) }}">Editar</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CLIENTES RECIENTES -->
+        <div class="admin-panel">
+            <div class="admin-panel-header">
+                <h2>Clientes Registrados</h2>
+                <a class="link-sm" href="{{ url_for('admin.clients_list') }}">Ver todos</a>
+            </div>
+            {% if recent_clients %}
+            <div class="clients-mini-list">
+                {% for client in recent_clients %}
+                <div class="client-mini-card">
+                    <div class="client-avatar">{{ client.nombre[:1]|upper }}</div>
+                    <div class="client-details">
+                        <strong>{{ client.nombre }}</strong>
+                        <span class="muted small">{{ client.email }}</span>
+                        <span class="client-meta">{{ client.ciudad or 'Colombia' }} · {{ client.created_at[:10] }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="muted p-2">Sin clientes registrados recientemente.</p>
+            {% endif %}
+
+            <div class="admin-quick-links">
+                <h3>Accesos Directos</h3>
+                <div class="quick-buttons-row">
+                    <a class="button button-sm button-secondary" href="{{ url_for('admin.products_list') }}">Inventario</a>
+                    <a class="button button-sm button-secondary" href="{{ url_for('admin.categories_manage') }}">Categorías</a>
+                    <a class="button button-sm button-secondary" href="{{ url_for('admin.clients_list') }}">Clientes</a>
+                    <a class="button button-sm" href="{{ url_for('shop.shop_view') }}" target="_blank">Ver Tienda</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

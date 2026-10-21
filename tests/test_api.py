@@ -153,10 +153,18 @@ class LePetitApiTests(unittest.TestCase):
         self.assertEqual(response.get_json()["error"]["code"], "not_found")
 
     def test_html_catalog_renders_products_and_cop(self):
-        response = self.client.get("/")
+        response = self.client.get("/tienda")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Laptop de prueba", response.data)
         self.assertIn(b"$ 335.958 COP", response.data)
+
+    def test_landing_page_renders_intro_sections(self):
+        with patch("controllers.shop_controller.catalog.fetch_top_products", return_value=[self.product]):
+            response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Tecnolog", response.data)
+        self.assertIn(b"Ir a la Tienda", response.data)
+        self.assertIn(b"L", response.data)
 
     def test_exchange_rate_must_be_positive(self):
         with self.assertRaises(RuntimeError):
@@ -282,11 +290,11 @@ class LePetitApiTests(unittest.TestCase):
                 self.assertIn(b"Tu carrito", cart.data)
                 self.assertIn(available_product.encode(), cart.data)
 
-                home = client.get("/")
+                home = client.get("/tienda")
                 self.assertEqual(home.status_code, 200)
-                self.assertIn(b"Tecnolog", home.data)
+                self.assertIn(b"Tienda", home.data)
                 self.assertEqual(home.data.count(b'class="product-card"'), 24)
-                next_page = client.get("/?category_id=1&page=2")
+                next_page = client.get("/tienda?category_id=1&page=2")
                 self.assertEqual(next_page.status_code, 200)
                 self.assertIn(b"de 24", next_page.data)
             with app.app_context():

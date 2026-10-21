@@ -5,7 +5,9 @@ from flask import Flask, jsonify, render_template, request
 from werkzeug.exceptions import HTTPException
 
 from configs.settings import BASE_DIR, Config
+from controllers.admin_controller import admin
 from controllers.api_controller import api
+from controllers.auth_controller import auth
 from controllers.shop_controller import shop
 from models.database import DatabaseConfigurationError, close_db
 
@@ -29,7 +31,25 @@ def create_app(test_config=None):
 
     app.register_blueprint(shop)
     app.register_blueprint(api)
+    app.register_blueprint(auth)
+    app.register_blueprint(admin)
     app.teardown_appcontext(close_db)
+
+    @app.context_processor
+    def inject_auth_context():
+        from flask import session
+        user = session.get("user")
+        return {
+            "current_user": user,
+            "is_admin": user.get("role") == "admin" if user else False,
+            "firebase_config": {
+                "apiKey": app.config.get("FIREBASE_API_KEY", ""),
+                "authDomain": app.config.get("FIREBASE_AUTH_DOMAIN", ""),
+                "databaseURL": app.config.get("FIREBASE_DATABASE_URL", ""),
+                "projectId": app.config.get("FIREBASE_PROJECT_ID", ""),
+                "storageBucket": app.config.get("FIREBASE_STORAGE_BUCKET", ""),
+            }
+        }
 
     @app.errorhandler(HTTPException)
     def handle_http_error(error):

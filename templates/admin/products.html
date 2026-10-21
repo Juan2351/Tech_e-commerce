@@ -1,0 +1,101 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Inventario | LePetit Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-products-container">
+    <div class="admin-page-header">
+        <div>
+            <h1>Inventario de Productos</h1>
+            <p class="muted">Gestión de catálogo en Firebase Realtime Database ({{ total_products }} productos).</p>
+        </div>
+        <div>
+            <a class="button" href="{{ url_for('admin.product_create') }}">+ Agregar Producto</a>
+        </div>
+    </div>
+
+    <!-- BUSCADOR Y FILTROS -->
+    <form class="admin-filter-bar" method="get" action="{{ url_for('admin.products_list') }}">
+        <input type="search" name="q" value="{{ search }}" placeholder="Buscar por ID, nombre o marca...">
+        <select name="category_id">
+            <option value="">Todas las categorías</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id_main_cat }}" {% if category_id == cat.id_main_cat %}selected{% endif %}>
+                {{ cat.nombre }}
+            </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filtrar</button>
+        <a class="button button-secondary" href="{{ url_for('admin.products_list') }}">Limpiar</a>
+    </form>
+
+    {% if products %}
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Precio COP</th>
+                    <th>Stock</th>
+                    <th>Calificación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td class="table-img-cell">
+                        <img class="admin-thumb" src="{{ product.image_url or url_for('static', filename='img/product-placeholder.svg') }}"
+                             alt="" data-product-category="{{ product.subcategoria }}" loading="lazy">
+                    </td>
+                    <td><code>{{ product.id_producto }}</code></td>
+                    <td>
+                        <strong>{{ product.nombre[:40] }}{% if product.nombre|length > 40 %}...{% endif %}</strong>
+                        <span class="muted small d-block">{{ product.marca }}</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-cat">{{ product.categoria }}</span>
+                    </td>
+                    <td><strong>{{ product.precio|cop }}</strong></td>
+                    <td>
+                        <span class="badge {% if product.stock < 10 %}badge-danger{% elif product.stock < 25 %}badge-warning{% else %}badge-success{% endif %}">
+                            {{ product.stock }} uds.
+                        </span>
+                    </td>
+                    <td>{{ "%.1f"|format(product.rating) }} / 5</td>
+                    <td class="table-actions-cell">
+                        <a class="button-action" href="{{ url_for('admin.product_edit', product_id=product.id_producto) }}">Editar</a>
+                        <form method="post" action="{{ url_for('admin.product_delete', product_id=product.id_producto) }}"
+                              onsubmit="return confirm('¿Confirmas la eliminación permanente de este producto en Firebase?');" style="display:inline;">
+                            <button type="submit" class="button-action button-danger">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAGINACIÓN -->
+    {% if total_pages > 1 %}
+    <nav class="pagination" aria-label="Paginación de productos">
+        {% if page > 1 %}
+        <a class="button button-secondary" href="{{ url_for('admin.products_list', q=search or None, category_id=category_id, page=page - 1) }}">Anterior</a>
+        {% endif %}
+        <span class="pagination-current">Página {{ page }} de {{ total_pages }}</span>
+        {% if page < total_pages %}
+        <a class="button button-secondary" href="{{ url_for('admin.products_list', q=search or None, category_id=category_id, page=page + 1) }}">Siguiente</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <p>No se encontraron productos con los criterios ingresados.</p>
+        <a class="button" href="{{ url_for('admin.products_list') }}">Restablecer filtros</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

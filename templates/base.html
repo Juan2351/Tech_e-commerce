@@ -2,31 +2,132 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="LePetit: catálogo de laptops, teléfonos, PC y accesorios tecnológicos.">
-    <title>{% block title %}LePetit | Tienda en línea{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="LePetit: Tienda de computadores, laptops, teléfonos y accesorios tecnológicos de alto rendimiento.">
+    <title>{% block title %}LePetit | Tecnología y Equipos{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </head>
 <body>
     <header class="site-header">
         <div class="header-inner">
-            <a class="brand" href="{{ url_for('shop.home') }}">LEPETIT</a>
-            <nav aria-label="Navegación principal">
-                <a href="{{ url_for('shop.home') }}#catalogo">Catálogo</a>
-                <a href="{{ url_for('shop.cart') }}">Carrito <span class="cart-count" data-cart-count>{{ cart_count|default(0) }}</span></a>
+            <a class="brand" href="{{ url_for('shop.home') }}">
+                <span class="brand-accent">LE</span>PETIT
+            </a>
+
+            <button class="mobile-menu-toggle" type="button" aria-label="Abrir menú" data-menu-toggle>
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+
+            <nav class="main-nav" data-nav-menu aria-label="Navegación principal">
+                <a href="{{ url_for('shop.home') }}">Inicio</a>
+                <a class="nav-shop-link" href="{{ url_for('shop.shop_view') }}">Tienda</a>
+                <a href="{{ url_for('shop.home') }}#categorias">Categorías</a>
+                <a href="{{ url_for('shop.home') }}#destacados">Destacados</a>
+                <a href="{{ url_for('shop.home') }}#contacto">Contacto</a>
+                <a class="nav-cart" href="{{ url_for('shop.cart') }}">
+                    Carrito <span class="cart-count" data-cart-count>{{ cart_count|default(0) }}</span>
+                </a>
+
+                <div class="nav-auth">
+                    {% if current_user %}
+                        {% if is_admin %}
+                            <a class="badge-admin" href="{{ url_for('admin.dashboard') }}">Panel Admin</a>
+                        {% endif %}
+                        <span class="user-greeting" title="{{ current_user.email }}">
+                            {{ current_user.nombre.split()[0] }}
+                        </span>
+                        <a class="nav-logout" href="{{ url_for('auth.logout') }}">Salir</a>
+                    {% else %}
+                        <a class="nav-login" href="{{ url_for('auth.login') }}">Ingresar</a>
+                        <a class="button button-sm button-register" href="{{ url_for('auth.register') }}">Registro</a>
+                    {% endif %}
+                </div>
             </nav>
-            <span class="database-status" data-database-status role="status" aria-live="polite">
-                Comprobando base de datos...
-            </span>
         </div>
     </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash-alert flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
     <main class="page">
         <p class="feedback" data-feedback role="status" aria-live="polite"></p>
         {% block content %}{% endblock %}
     </main>
+
     <footer class="site-footer">
-        <p>LePetit · Tecnología, equipos y accesorios con carrito de demostración.</p>
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h3 class="footer-brand"><span class="brand-accent">LE</span>PETIT</h3>
+                <p class="footer-desc">
+                    Especialistas en tecnología, cómputo y periféricos de alto desempeño. Distribución autorizada con cobertura nacional y garantía certificada.
+                </p>
+            </div>
+
+            <div class="footer-col">
+                <h4>Navegación</h4>
+                <ul class="footer-links">
+                    <li><a href="{{ url_for('shop.home') }}">Inicio</a></li>
+                    <li><a href="{{ url_for('shop.shop_view') }}">Tienda Oficial</a></li>
+                    <li><a href="{{ url_for('shop.home') }}#categorias">Líneas de Producto</a></li>
+                    <li><a href="{{ url_for('shop.home') }}#destacados">Productos Destacados</a></li>
+                    <li><a href="{{ url_for('shop.cart') }}">Carrito de Compras</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>Categorías Principales</h4>
+                <ul class="footer-links">
+                    <li><a href="{{ url_for('shop.shop_view', category_id=1) }}">Smartphones</a></li>
+                    <li><a href="{{ url_for('shop.shop_view', category_id=4) }}">Laptops & Portátiles</a></li>
+                    <li><a href="{{ url_for('shop.shop_view', category_id=6) }}">Monitores & Pantallas</a></li>
+                    <li><a href="{{ url_for('shop.shop_view', category_id=3) }}">Mice & Teclados</a></li>
+                    <li><a href="{{ url_for('shop.shop_view', category_id=10) }}">Accesorios & Conectividad</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col" id="contacto-footer">
+                <h4>Atención al Cliente</h4>
+                <ul class="footer-contact-list">
+                    <li>
+                        <strong>Línea Corporativa:</strong>
+                        <a href="tel:+573001234567">+57 (300) 123-4567</a>
+                    </li>
+                    <li>
+                        <strong>Correo Institucional:</strong>
+                        <a href="mailto:contacto@lepetit.com">contacto@lepetit.com</a>
+                    </li>
+                    <li>
+                        <strong>Sede Principal:</strong>
+                        <span>Medellín / Bogotá, Colombia</span>
+                    </li>
+                    <li>
+                        <strong>Horario de Operación:</strong>
+                        <span>Lunes a Sábado: 8:00 AM – 7:00 PM</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2026 LePetit Technologies · Arquitectura MVC.</p>
+            <div class="footer-admin-link">
+                {% if not is_admin %}
+                    <a href="{{ url_for('auth.login') }}">Acceso Administrativo</a>
+                {% else %}
+                    <a href="{{ url_for('admin.dashboard') }}">Ir al Panel de Control</a>
+                {% endif %}
+            </div>
+        </div>
     </footer>
 </body>
 </html>

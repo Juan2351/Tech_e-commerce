@@ -24,6 +24,14 @@ class Config:
     DATABASE_SCHEMA_PATH = str(BASE_DIR / "database" / "schema.sql")
     DATABASE_SEED_PATH = str(BASE_DIR / "database" / "seed.sql")
     USD_TO_COP_RATE = os.getenv("USD_TO_COP_RATE", "4200")
+    DATABASE_BACKEND = os.getenv("DATABASE_BACKEND", "firebase")
+    FIREBASE_DATABASE_URL = os.getenv(
+        "FIREBASE_DATABASE_URL", "https://lepetit-e4386-default-rtdb.firebaseio.com"
+    ).rstrip("/")
+    FIREBASE_API_KEY = os.getenv("FIREBASE_API_KEY", "AIzaSyBhrtT0Ld-45e0jcY9hW5Jf0dSdzS4A3Zc")
+    FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID", "lepetit-e4386")
+    FIREBASE_AUTH_DOMAIN = os.getenv("FIREBASE_AUTH_DOMAIN", "lepetit-e4386.firebaseapp.com")
+    FIREBASE_STORAGE_BUCKET = os.getenv("FIREBASE_STORAGE_BUCKET", "lepetit-e4386.firebasestorage.app")
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true"
