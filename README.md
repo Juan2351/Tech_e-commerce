@@ -4,26 +4,37 @@ LePetit es una tienda web de demostración para consultar un catálogo de produc
 
 ## Descripción del sistema
 
-- **Problema:** presentar un catálogo de comercio electrónico consultable y una interacción básica de compra sin mezclar la interfaz con las consultas de datos.
-- **Objetivo:** mostrar productos, precios en pesos colombianos (COP), marcas, categorías, stock y permitir modificar un carrito.
-- **Usuarios:** cliente visitante. No hay cuentas de usuario ni panel de administración en este prototipo.
-- **Funcionalidades implementadas:** listar, buscar y filtrar productos; ordenar por precio o calificación; consultar detalle; agregar, actualizar y quitar productos del carrito; consultar endpoints REST.
-- **Información almacenada:** título del producto, precio base, calificación, reseñas, stock, enlaces, imagen, marca, categoría principal y subcategoría. El carrito se guarda temporalmente en la sesión Flask firmada.
-- **Integraciones:** SQLite local para el catálogo; URLs de imágenes del CSV, Unsplash CDN como respaldo por categoría y una imagen SVG local como último recurso. No se integra pasarela de pagos, autenticación, mapas, correo ni WhatsApp.
+- **Problema:** presentar un catálogo de comercio electrónico tecnológico consultable, interacción de compra y un panel de gestión administrativa sin mezclar la interfaz con las capas de datos ni exponer secretos de infraestructura.
+- **Objetivo:** exhibir productos, precios en pesos colombianos (COP), marcas, categorías, stock, permitir modificar un carrito de compras, autenticar usuarios y administrar inventario mediante un panel protegido.
+- **Usuarios y Roles:**
+  - **Visitante / Cliente:** navega por la Landing Page, explora la Tienda Oficial, filtra productos, gestiona el carrito de compras y puede registrarse o iniciar sesión.
+  - **Administrador:** accede al panel administrativo independiente (`/admin`) para gestionar productos (CRUD), categorías y clientes, además de visualizar métricas en tiempo real.
+- **Funcionalidades implementadas:**
+  - Landing Page (`/`) con Hero corporativo, carrusel de categorías con SVG, carrusel de productos destacados y formulario de contacto.
+  - Tienda Oficial (`/tienda`) con buscador, filtros por categoría, ordenamiento y paginación (24 productos por página).
+  - Autenticación (`/login`, `/registro`, `/logout`) con encriptación PBKDF2-SHA256 y control de acceso basado en roles (RBAC).
+  - Panel Administrativo (`/admin`) con sidebar slider colapsible, KPIs, gestión de inventario, categorías y clientes.
+  - Carrito de compras con cálculo de subtotales en COP y persistencia en sesión firmada.
+  - API RESTful versionada (`/api/v1/*`) para operaciones asíncronas de catálogo y carrito.
+- **Persistencia e Integraciones:** Soporte dual configurable vía `.env`:
+  - **Firebase Realtime Database (Nube):** Base de datos cloud en Google Firebase con sincronización y persistencia global.
+  - **SQLite (Local):** Base de datos relacional local cargada desde el CSV de 3,718 productos.
+  - URLs de imágenes del CSV, respaldo tecnológico con Unsplash CDN y SVG local de respaldo.
 
 ## Tecnologías y decisiones
 
 | Área | Tecnología | Decisión |
 |---|---|---|
-| Backend | Python 3 y Flask | Backend único ligero, dividido en controladores y servicios. |
-| Presentación | HTML5 semántico y Jinja | Las páginas se renderizan desde el servidor. |
-| Interacción del navegador | JavaScript sin framework | La API REST gestiona el carrito sin recargar la página al agregar. |
-| Estilos | CSS propio mínimo | Paleta blanca, gris y negra, adaptable a pantallas pequeñas y efectos hover discretos. |
-| Persistencia | SQLite | Base relacional local que se crea automáticamente; no requiere instalar ni configurar un servidor. |
-| Acceso a datos | `sqlite3` de Python y SQL parametrizado | Evita sumar ORM y mantiene visibles el DDL y las relaciones SQL. |
-| Configuración | `.env` local y `python-dotenv` | Permite cambiar rutas locales y la tasa de conversión sin incluir configuración privada. |
-| Imágenes | URLs del CSV, Unsplash CDN y SVG local | Se conserva la imagen original cuando carga; hay respaldo visual por categoría y una alternativa local. |
-| Documentación | Mermaid y OpenAPI 3.0 | Fuentes editables para C1-C4, modelo relacional y contrato HTTP. |
+| Backend | Python 3 y Flask | Backend único ligero, modularizado en controladores, servicios y modelos MVC. |
+| Presentación | HTML5 semántico y Jinja2 | Vistas renderizadas del servidor con separación limpia entre Landing, Tienda y Admin. |
+| Interacción frontend | JavaScript Vanilla | Manejo de carrito asíncrono, carruseles fluidos y slider del sidebar sin sobrecarga de frameworks. |
+| Estilos | CSS3 nativo avanzado | Variables CSS, diseño responsive, animaciones fluidas, modo oscuro y sidebar slider. |
+| Persistencia (Cloud) | Firebase Realtime Database | Base NoSQL en la nube de Google para datos globales y gestión remota sin servidores dedicados. |
+| Persistencia (Local) | SQLite3 y CSV | Base relacional local parametrizada que se inicializa automáticamente desde el dataset. |
+| Autenticación | Werkzeug Security & RBAC | Hashing seguro de contraseñas con PBKDF2-SHA256 y decoradores de protección de rutas (`@login_required`, `@admin_required`). |
+| Configuración | `.env` y `python-dotenv` | Centraliza backend activo (`firebase`/`sqlite`), credenciales seguras y tasa USD/COP. |
+| Pruebas | Python `unittest` | Suite de 24 pruebas automatizadas con 100% de éxito cubriendo API, roles, auth y catálogo. |
+| Documentación | Markdown, Mermaid y OpenAPI | Arquitectura C1-C4, esquema relacional y contratos REST interactivos. |
 
 La lista inicial también menciona Java. No se utiliza en esta versión: se seleccionó Python/Flask como único backend para mantener un solo servidor y una arquitectura coherente. El proyecto tampoco necesita React porque Flask entrega HTML y el JavaScript consume la API en el mismo origen.
 
@@ -32,79 +43,96 @@ Los valores `precio` del CSV son precios base en USD. Se muestran en COP calcula
 ## Arquitectura MVC y árbol de carpetas
 
 ```text
-ECOMMERCELEPETIT/
-├── app.py                         # Fábrica Flask, registro de rutas y errores
+Tech_e-commerce/
+├── app.py                         # Fábrica Flask, registro de rutas y manejadores de error
 ├── configs/
-│   └── settings.py                # Variables de entorno y configuración
+│   └── settings.py                # Variables de entorno (Firebase/SQLite, USD/COP, Secret Key)
 ├── controllers/
-│   ├── api_controller.py          # Endpoints JSON versionados
-│   └── shop_controller.py         # Rutas de las páginas HTML
+│   ├── shop_controller.py         # Rutas públicas (Landing /, Tienda /tienda, Detalle, Carrito)
+│   ├── auth_controller.py         # Autenticación (/login, /registro, /logout) y decoradores RBAC
+│   ├── admin_controller.py        # Módulo de administración (/admin/*) para inventario, categorías y clientes
+│   └── api_controller.py          # Endpoints API REST JSON versionados (/api/v1/*)
 ├── services/
-│   └── cart_service.py            # Reglas de stock y carrito
+│   └── cart_service.py            # Reglas de negocio del carrito, validación de stock y subtotales
 ├── models/
-│   ├── database.py                # Conexión SQLite, consultas y cierre
-│   ├── database_setup.py          # Creación del esquema e importación inicial del CSV
-│   ├── database_errors.py         # Error de configuración y carga del catálogo
-│   ├── catalog.py                 # Repositorio SQL de productos y categorías
-│   └── entities.py                # Modelo Product y serialización
-├── templates/                     # Páginas HTML renderizadas por Flask/Jinja
+│   ├── firebase_db.py             # Cliente REST nativo para Firebase Realtime Database (Cloud)
+│   ├── auth_model.py              # Gestión de usuarios, hashing PBKDF2 y persistencia
+│   ├── catalog.py                 # Repositorio unificado de productos y categorías (Firebase/SQLite)
+│   ├── database.py                # Conexión local SQLite, consultas parametrizadas y cierre
+│   ├── database_setup.py          # Esquema relacional e importación inicial del CSV a SQLite
+│   ├── database_errors.py         # Excepciones personalizadas de base de datos
+│   └── entities.py                # Modelo Product tipado e inmutable y serialización
+├── templates/
+│   ├── base.html                  # Layout público maestro con navegación y pie de página
+│   ├── index.html                 # Landing Page corporativa (Hero, Carruseles y Contacto)
+│   ├── shop.html                  # Tienda Oficial dedicada (Buscador, Filtros, Grilla, Paginación)
+│   ├── product_detail.html        # Ficha técnica detallada del producto
+│   ├── cart.html                  # Resumen del carrito y totales
+│   ├── error.html                 # Manejo visual de errores HTTP
+│   ├── auth/                      # Vistas de autenticación
+│   │   ├── login.html             # Formulario de inicio de sesión
+│   │   └── register.html          # Formulario de registro de clientes
+│   └── admin/                     # Panel Administrativo independiente con Sidebar Slider
+│       ├── base_admin.html        # Layout exclusivo del administrador
+│       ├── dashboard.html         # Panel de métricas e indicadores KPI
+│       ├── products.html          # Listado y gestión de inventario
+│       ├── product_form.html      # Creación y edición de productos
+│       ├── categories.html        # Gestión y CRUD de categorías
+│       └── clients.html           # Directorio y roles de clientes
 ├── static/
-│   ├── css/styles.css             # Estilos adaptables de la tienda
-│   ├── js/app.js                  # Interacción del carrito y estado de la base local
-│   └── img/product-placeholder.svg # Imagen de respaldo para productos
+│   ├── css/styles.css             # Estilos completos: diseño responsivo, dark mode, slider
+│   ├── js/app.js                  # Lógica frontend: carrito asíncrono, carruseles, sidebar drawer
+│   └── img/                       # Recursos gráficos locales y fotografías de respaldo
 ├── database/
 │   ├── schema.sql                 # Tablas, relaciones e índices SQLite
-│   ├── seed.sql                   # Categorías tecnológicas del catálogo
-│   ├── data/                      # CSV de catálogo cargado automáticamente
-│   └── queries.sql                # Consultas SQLite para validación
-├── Diagramas/                     # Fotografías compartidas como insumo
+│   ├── seed.sql                   # Taxonomía tecnológica de categorías
+│   ├── data/                      # Dataset CSV original con 3,718 productos
+│   └── queries.sql                # Consultas de verificación relacional
+├── scripts/
+│   ├── migrate_to_firebase.py     # Script de migración y población masiva a Firebase
+│   └── create_admin.py            # Creación del usuario administrador inicial
 ├── docs/
-│   ├── C4.md                      # Explicación C1-C4 y flujo principal
-│   ├── openapi.yaml               # Contrato de la API REST
-│   └── diagramas/                 # Mermaid: C1, C2, C3, C4 y ER
+│   ├── ARQUITECTURA_Y_MIGRACION.md # Guía detallada para sustentación docente
+│   ├── C4.md                      # Explicación de modelos C1-C4
+│   ├── openapi.yaml               # Especificación OpenAPI 3.0 de la API REST
+│   └── diagramas/                 # Fuentes Mermaid de arquitectura y ER
 ├── tests/
-├── .env.example                   # Plantilla sin secretos
-├── .gitignore
-├── requirements.txt
-└── README.md
+│   ├── test_api.py                # Pruebas de API REST, catálogo y cálculos en COP
+│   └── test_auth_admin.py         # Pruebas de autenticación y control de acceso RBAC
+├── .env.example                   # Plantilla de variables de entorno segura
+├── .gitignore                     # Exclusión de entornos, secretos y SQLite generado
+├── requirements.txt               # Dependencias Python del proyecto
+└── README.md                      # Documentación integral del sistema
 ```
 
 ### Descripción de carpetas y archivos
 
 | Ruta | Descripción |
 |---|---|
-| `app.py` | Crea la aplicación Flask, registra las rutas de la tienda y la API, configura el cierre de conexiones y presenta errores HTTP o de base de datos. |
-| `configs/settings.py` | Carga `.env` y centraliza las rutas de SQLite y del CSV, la tasa USD/COP y HTTPS local. |
-| `controllers/shop_controller.py` | Atiende las páginas HTML: catálogo, detalle de producto y carrito. Valida filtros de búsqueda y entrega los datos a las plantillas. |
-| `controllers/api_controller.py` | Expone las rutas JSON versionadas para consultar salud, productos, categorías y modificar el carrito. |
-| `services/cart_service.py` | Implementa las reglas del carrito: validar identificador y cantidad, comprobar existencia y stock, y calcular subtotales. |
-| `models/database.py` | Abre y cierra conexiones SQLite por solicitud y proporciona consultas parametrizadas de una fila o varias filas. |
-| `models/database_setup.py` | Crea las tablas e importa marcas, categorías y productos del CSV la primera vez que se usa la base. |
-| `models/database_errors.py` | Define el error explícito de inicialización o configuración de la base local. |
-| `models/catalog.py` | Consulta productos, categorías y subcategorías; aplica búsqueda, filtros y ordenamiento, y convierte filas a entidades. |
-| `models/entities.py` | Define la entidad `Product` y la conversión de registros de base de datos a productos de la aplicación. |
-| `templates/base.html` | Estructura compartida de las páginas: idioma, metadatos, navegación, contador del carrito, avisos, CSS y JavaScript. |
-| `templates/index.html` | Página del catálogo; muestra búsqueda, filtros, ordenamiento y tarjetas de productos con precio, stock y acción para agregar al carrito. |
-| `templates/product_detail.html` | Detalle de producto con imagen, descripción, marca, calificación, precio, disponibilidad y selector de cantidad. |
-| `templates/cart.html` | Resumen del carrito con cantidades editables, opción para quitar productos y total estimado; informa que no procesa pagos. |
-| `templates/error.html` | Página de error HTML para solicitudes del sitio que no pueden completarse. |
-| `static/css/styles.css` | Reglas visuales de la tienda, componentes, estados y presentación adaptable a distintos tamaños de pantalla. |
-| `static/js/app.js` | Envía operaciones del carrito a la API, actualiza el contador y los mensajes, verifica la base local y reemplaza imágenes que no cargan por el recurso local. |
-| `static/img/product-placeholder.svg` | Imagen local utilizada cuando un producto no tiene imagen disponible o la imagen remota falla. |
-| `database/schema.sql` | Define las tablas SQLite, las claves foráneas, las restricciones y los índices del catálogo. |
-| `database/seed.sql` | Prepara categorías y subcategorías de tecnología; no incluye productos ficticios. |
-| `database/data/amazon_tech_products_ecommerceGKALI.csv` | Datos de entrada con 3718 productos tecnológicos que se importan en el primer acceso a SQLite. |
-| `database/lepetit.sqlite3` | Base de datos generada automáticamente; no se versiona y se regenera desde el CSV si se elimina. |
-| `database/queries.sql` | Incluye consultas de comprobación para explorar los datos y validar relaciones. |
-| `docs/openapi.yaml` | Describe el contrato de la API REST, sus parámetros, respuestas y errores. |
-| `docs/C4.md` y `docs/diagramas/` | Explican la arquitectura y contienen fuentes Mermaid editables para los diagramas C1-C4 y el modelo entidad-relación. |
-| `Diagramas/` | Conserva las imágenes de diagramas y definiciones recibidas como material de referencia. |
-| `tests/test_api.py` | Prueba endpoints, validaciones, reglas del carrito, conversión de precios y renderizado HTML usando datos controlados. |
-| `.env.example` | Plantilla de variables de entorno sin credenciales reales; se copia a `.env` para configurar cada entorno local. |
-| `.gitignore` | Evita incluir archivos locales o generados que no pertenecen al código versionado. |
-| `requirements.txt` | Declara las dependencias Python necesarias para ejecutar la aplicación. |
-| `.vscode/settings.json` | Configuración del editor VS Code para este proyecto. |
-| `README.md` | Guía del proyecto: arquitectura, configuración, ejecución, base de datos, API y validación. |
+| `app.py` | Fábrica principal de Flask; registra blueprints públicos, de autenticación, administrativos y API REST; maneja errores globales. |
+| `configs/settings.py` | Carga `.env`; define el backend activo (`DATABASE_BACKEND`), credenciales seguras de Firebase, rutas y tasa USD/COP. |
+| `controllers/shop_controller.py` | Controla las vistas públicas: Landing Page (`/`), Tienda Oficial (`/tienda`), Detalle de producto (`/producto/<id>`) y Carrito (`/carrito`). |
+| `controllers/auth_controller.py` | Gestiona inicio de sesión, registro de nuevos clientes y cierre de sesión; implementa decoradores `@login_required` y `@admin_required`. |
+| `controllers/admin_controller.py` | Controla el panel administrativo protegido: Dashboard de KPIs, CRUD completo de productos, gestión de categorías y clientes. |
+| `controllers/api_controller.py` | Expone endpoints RESTful versionados (`/api/v1/*`) para catálogo y operaciones del carrito sin recargar la página. |
+| `services/cart_service.py` | Reglas del carrito de compras: verificación de existencia, disponibilidad de stock y cálculo de totales en COP. |
+| `models/firebase_db.py` | Capa de persistencia en la nube; realiza operaciones REST (GET, PUT, POST, PATCH, DELETE) sobre Firebase Realtime Database. |
+| `models/auth_model.py` | Modelo de autenticación; valida credenciales, aplica hashing seguro de contraseñas (PBKDF2-SHA256) y gestiona usuarios. |
+| `models/catalog.py` | Repositorio unificado de catálogo; abstrae el origen de datos (Firebase o SQLite) entregando entidades consistentes a la aplicación. |
+| `models/database.py` | Maneja la conexión local SQLite por solicitud, transacciones y consultas parametrizadas. |
+| `models/database_setup.py` | Crea las tablas SQLite e importa marcas, categorías y los 3,718 productos desde el CSV al inicializarse. |
+| `models/database_errors.py` | Excepciones personalizadas para manejo controlado de fallas en conexiones de datos. |
+| `models/entities.py` | Entidad `Product` inmutable con métodos de conversión y serialización para vistas y API. |
+| `templates/index.html` | Landing Page moderna con Hero corporativo, carrusel interactivo de categorías con SVG, productos destacados y contacto. |
+| `templates/shop.html` | Tienda Oficial dedicada con buscador integrado, filtros por categoría, ordenamiento y paginación. |
+| `templates/auth/login.html` | Vista de inicio de sesión con alertas de error y redirección según rol. |
+| `templates/auth/register.html` | Vista de registro para nuevos clientes con validación en servidor. |
+| `templates/admin/` | Conjunto de vistas del panel administrativo con sidebar slider colapsible (Dashboard, Productos, Formulario, Categorías, Clientes). |
+| `scripts/migrate_to_firebase.py` | Script automatizado para migrar y estructurar todo el catálogo CSV y usuarios en Firebase Realtime Database. |
+| `scripts/create_admin.py` | Script interactivo/automático para dar de alta el usuario administrador inicial. |
+| `docs/ARQUITECTURA_Y_MIGRACION.md` | Documentación técnica específica para la sustentación sobre la migración cloud y separación de módulos. |
+| `tests/test_auth_admin.py` | Pruebas unitarias de autenticación, hashing y protección de rutas administrativas. |
+| `tests/test_api.py` | Pruebas unitarias del catálogo, carrito y endpoints REST. |
 
 ### Separación de responsabilidades
 
@@ -188,16 +216,39 @@ El desarrollo local funciona en HTTP. Para probar HTTPS, genera un certificado d
 
 ## Funcionalidades web
 
-- Catálogo de 3718 productos tecnológicos importado desde CSV a SQLite y paginado en bloques de 24 para mantener ágil la página.
-- Búsqueda por nombre, descripción o marca.
-- Filtro por categoría principal y orden por precio ascendente/descendente o valoración.
-- Página de detalle con descripción, rating, reseñas y existencias.
-- Precios en COP con separador local colombiano y tasa configurable.
-- Carrito: agregar, cambiar cantidad, quitar productos; valida existencia y stock.
-- Mensajes accesibles de éxito/error; si falla la imagen original de Amazon, carga una foto tecnológica representativa por categoría desde Unsplash y conserva un recurso local como último respaldo.
-- Diseño adaptativo básico en gris, blanco y negro. Sin efectos visuales ni dependencias de frontend.
+- **Landing Page (`/`):**
+  - Presentación corporativa con Hero moderno y llamado a la acción.
+  - Carrusel interactivo de categorías tecnológicas con navegación suave e iconografía SVG profesional (cero emojis).
+  - Carrusel de productos más comprados y destacados basados en ratings reales.
+  - Sección de garantías oficiales y formulario funcional de contacto directo.
+- **Tienda Oficial (`/tienda` o `/catalogo`):**
+  - Catálogo de 3,718 productos tecnológicos con paginación optimizada (24 artículos por página).
+  - Búsqueda en tiempo real por nombre, marca o especificaciones.
+  - Filtros dinámicos por categorías principales y subcategorías.
+  - Ordenamiento por destacados, precio (ascendente/descendente) y mejor valoración.
+  - Ficha de detalle (`/producto/<id>`) con galería, reseñas y selector de cantidad.
+- **Carrito de compras (`/carrito`):**
+  - Agregar, modificar unidades y eliminar productos asíncronamente vía API REST.
+  - Validación estricta de existencias y stock en servidor.
+  - Conversión y presentación monetaria en Pesos Colombianos (COP) con separadores locales.
+- **Módulo de Autenticación y Control de Acceso (RBAC):**
+  - Registro de clientes con contraseñas encriptadas mediante PBKDF2-SHA256 (`/registro`).
+  - Inicio de sesión con redirección automática según rol (`/login`).
+  - Decoradores de seguridad `@login_required` y `@admin_required` para proteger endpoints.
+- **Panel Administrativo (`/admin`):**
+  - Layout aislado con Sidebar Slider colapsible (menú retráctil en escritorio y drawer modal en móviles).
+  - **Dashboard:** Métricas clave (KPIs) en tiempo real: total productos, categorías, clientes registrados, stock global y valuación.
+  - **Inventario:** Tabla interactiva con búsqueda, badges de stock y acciones directas.
+  - **CRUD de Productos:** Formulario para crear y editar productos completos.
+  - **Gestión de Categorías:** CRUD y monitoreo de productos asociados por categoría.
+  - **Gestión de Clientes:** Directorio de usuarios y roles registrados.
 
-El carrito es temporal en una cookie de sesión Flask firmada. La sesión no contiene el precio como fuente confiable: el servidor vuelve a leer precio y stock en SQLite. No se registra una orden, no se descuenta stock y no se procesa un pago.
+### Cuentas de Acceso para Pruebas
+
+| Rol | Correo Electrónico | Contraseña | Acceso |
+|---|---|---|---|
+| **Administrador** | `admin@lepetit.com` | `admin123` | Portal de Tienda y Panel `/admin` |
+| **Cliente** | `cliente@lepetit.com` | `cliente123` | Portal de Tienda y Carrito |
 
 ## API REST
 
@@ -265,7 +316,8 @@ Para explicar la exposición: C1, quién usa LePetit; C2, navegador, servidor y 
 - Los endpoints API sirven tanto a la interfaz JavaScript como a clientes de prueba.
 - No se activa CORS porque la aplicación consume la API en su mismo origen.
 - HTTPS local se puede habilitar con certificado propio; HTTP queda para el desarrollo simple.
-- No hay autenticación: el MVP solo permite catálogo y carrito de visitante. No se aceptan escrituras de productos ni pagos.
+- Autenticación y Autorización implementadas: arquitectura RBAC con roles de Visitante, Cliente y Administrador. Contraseñas protegidas con salt y hash PBKDF2-SHA256 (`werkzeug.security`) y decoradores de ruta (`@login_required`, `@admin_required`).
+- Gestión completa de inventario desde el panel administrativo (`/admin`).
 
 ### Git y GitHub
 
@@ -280,19 +332,46 @@ py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 Copy-Item .env.example .env
-# La base local se importa automáticamente desde el CSV:
+```
+
+Configura en tu archivo `.env` el motor de persistencia deseado:
+- Para usar **Firebase Realtime Database (Nube)**:
+  ```env
+  DATABASE_BACKEND=firebase
+  FIREBASE_DATABASE_URL=https://lepetit-e4386-default-rtdb.firebaseio.com
+  FIREBASE_API_KEY=tu-api-key
+  ```
+  *(Opcional: ejecuta `python scripts/migrate_to_firebase.py` para sincronizar o poblar Firebase desde el CSV).*
+
+- Para usar **SQLite (Local)**:
+  ```env
+  DATABASE_BACKEND=sqlite
+  DATABASE_PATH=database/lepetit.sqlite3
+  ```
+
+Inicia la aplicación:
+```powershell
 python app.py
 ```
 
-No abras `templates/index.html` con Live Server: arranca Flask con `python app.py` y abre `http://127.0.0.1:5000`. Para contribuir después, crea una rama (`git switch -c feature/mi-cambio`), prueba el cambio, haz commit y súbela (`git push -u origin feature/mi-cambio`) para abrir un PR contra `main`. Agregar colaboradores, aprobar PRs o cambiar permisos requiere acceso autorizado al repositorio.
+Abre `http://127.0.0.1:5000` en tu navegador.
+- Landing Page: `http://127.0.0.1:5000/`
+- Tienda Oficial: `http://127.0.0.1:5000/tienda`
+- Iniciar Sesión: `http://127.0.0.1:5000/login`
+- Panel Administrativo: `http://127.0.0.1:5000/admin` (Credenciales: `admin@lepetit.com` / `admin123`)
 
-## Validación
+## Validación y Pruebas Automatizadas
 
-Instala dependencias y ejecuta las pruebas:
+Instala dependencias y ejecuta la suite completa de pruebas:
 
 ```powershell
-python -m unittest discover -s tests -v
+python -m unittest discover tests -v
 ```
 
-Los tests automatizados comprueban formato API, filtros, errores de validación, stock, carrito, renderizado de precios e importación del CSV a SQLite.
+Los 24 tests automatizados comprueban:
+- Endpoints RESTful de productos, categorías, salud y carrito.
+- Cálculos y validaciones de stock, cantidades positivas y subtotales en COP.
+- Autenticación, registro, hashing seguro de contraseñas y cierre de sesión.
+- Control de acceso RBAC protegiendo el panel `/admin` contra accesos no autorizados.
+- Renderizado de vistas HTML y fallback visual de imágenes.
 
