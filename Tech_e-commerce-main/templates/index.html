@@ -366,4 +366,39 @@
         </div>
     </div>
 </section>
+
+<section id="quienes-somos" class="section-container about-section" aria-labelledby="about-heading">
+    <div class="about-card">
+        <p class="section-subtitle">PROYECTO UNIVERSITARIO</p>
+        <h2 id="about-heading">Quiénes somos</h2>
+        <img
+            class="about-university-logo"
+            src="{{ url_for('static', filename='img/universidad-libre.webp') }}"
+            alt="Escudo de la Universidad Libre"
+            width="76"
+            height="76"
+            loading="lazy"
+        >
+        <p class="about-description">
+            LePetit es un proyecto académico de la Universidad Libre, creado para ofrecer
+            una experiencia web dedicada a explorar productos tecnológicos. La plataforma
+            reúne un catálogo organizado, fichas de producto, herramientas de búsqueda y
+            una experiencia de compra demostrativa.
+        </p>
+        <p class="about-description">
+            Con este trabajo ponemos en práctica nuestros conocimientos de desarrollo web,
+            diseño de interfaces y gestión de información, integrando cada parte del sitio
+            en una experiencia clara y sencilla de usar.
+        </p>
+        <div class="about-team">
+            <h3>Conoce al equipo</h3>
+            <ul class="about-team-list">
+                <li>Cristopher Arboleda</li>
+                <li>Juan José Toro</li>
+                <li>Kevin Ospina Villada</li>
+                <li>Juan Pablo Ruiz</li>
+            </ul>
+        </div>
+    </div>
+</section>
 {% endblock %}
