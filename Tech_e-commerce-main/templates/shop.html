@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Tienda Oficial | LePetit{% endblock %}
+
+{% block content %}
+<section class="shop-page-section">
+    <div class="section-heading">
+        <div>
+            <p class="section-subtitle">INVENTARIO DISPONIBLE</p>
+            <h1 class="shop-main-title">Tienda Oficial</h1>
+        </div>
+        <p class="catalog-count-pill">{{ total_products }} producto(s) en catálogo</p>
+    </div>
+
+    <!-- FILTROS Y BÚSQUEDA -->
+    <form class="filters" method="get" action="{{ url_for('shop.shop_view') }}">
+        <label>
+            Buscar Producto
+            <input type="search" name="q" value="{{ search }}" maxlength="100" placeholder="Nombre, modelo o marca...">
+        </label>
+        <label>
+            Categoría
+            <select name="category_id">
+                <option value="">Todas las categorías</option>
+                {% for category in categories %}
+                <option value="{{ category.id_main_cat }}" {% if category_id == category.id_main_cat %}selected{% endif %}>
+                    {{ category.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Ordenar por
+            <select name="sort">
+                <option value="featured" {% if sort == "featured" %}selected{% endif %}>Destacados</option>
+                <option value="price_asc" {% if sort == "price_asc" %}selected{% endif %}>Precio: menor a mayor</option>
+                <option value="price_desc" {% if sort == "price_desc" %}selected{% endif %}>Precio: mayor a menor</option>
+                <option value="rating_desc" {% if sort == "rating_desc" %}selected{% endif %}>Mejor calificados</option>
+            </select>
+        </label>
+        <div class="filter-buttons">
+            <button type="submit">Aplicar filtros</button>
+            <a class="button button-secondary" href="{{ url_for('shop.shop_view') }}">Limpiar</a>
+        </div>
+    </form>
+
+    <!-- GRILLA DE PRODUCTOS -->
+    {% if products %}
+    <div class="product-grid">
+        {% for product in products %}
+        <article class="product-card">
+            <a class="product-image" href="{{ url_for('shop.product_detail', product_id=product.id_producto) }}">
+                <img src="{{ product.image_url or url_for('static', filename='img/product-placeholder.svg') }}"
+                     alt="{{ product.nombre }}" data-product-category="{{ product.subcategoria }}" loading="lazy">
+            </a>
+            <div class="product-info">
+                <p class="product-category">{{ product.categoria }} / {{ product.subcategoria }}</p>
+                <h3><a href="{{ url_for('shop.product_detail', product_id=product.id_producto) }}">{{ product.nombre }}</a></h3>
+                <p class="muted">{{ product.marca }} · Calificación: {{ "%.1f"|format(product.rating) }} / 5 ({{ product.reviews_count }} reseñas)</p>
+                <p class="price">{{ product.precio|cop }}</p>
+                <p class="stock-info {% if product.stock < 10 %}stock-low{% endif %}">
+                    Disponibles: <strong>{{ product.stock }}</strong>
+                </p>
+                <button type="button" class="card-add-button" data-cart-add data-product-id="{{ product.id_producto }}"
+                        data-quantity="1" {% if product.stock < 1 %}disabled{% endif %}>
+                    {% if product.stock > 0 %}Agregar al carrito{% else %}Agotado{% endif %}
+                </button>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    <!-- PAGINACIÓN -->
+    {% if total_pages > 1 %}
+    <nav class="pagination" aria-label="Paginación del catálogo">
+        {% if page > 1 %}
+        <a class="button button-secondary"
+           href="{{ url_for('shop.shop_view', q=search or None, category_id=category_id, sort=sort, page=page - 1) }}">Anterior</a>
+        {% endif %}
+        <span class="pagination-current">Página {{ page }} de {{ total_pages }}</span>
+        {% if page < total_pages %}
+        <a class="button button-secondary"
+           href="{{ url_for('shop.shop_view', q=search or None, category_id=category_id, sort=sort, page=page + 1) }}">Siguiente</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <p>No se encontraron productos que coincidan con la búsqueda.</p>
+        <a class="button" href="{{ url_for('shop.shop_view') }}">Ver todos los productos</a>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

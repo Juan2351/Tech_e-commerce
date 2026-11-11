@@ -1,0 +1,32 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Aptos, Segoe UI, Arial, sans-serif","fontSize":"16px","primaryColor":"#EAF2FF","primaryTextColor":"#10233F","primaryBorderColor":"#3973B9","lineColor":"#58708E","secondaryColor":"#F1F5F9","tertiaryColor":"#E7F5F2","background":"#FFFFFF","mainBkg":"#FFFFFF","textColor":"#10233F"}}}%%
+flowchart LR
+    subgraph backend["Aplicación web LePetit · Python y Flask"]
+        direction TB
+        tienda["Controlador de tienda<br/>shop_controller.py<br/>Catálogo, detalle y carrito"]
+        api["Controlador API<br/>api_controller.py<br/>Valida solicitudes REST"]
+        carrito["Servicio de carrito<br/>cart_service.py<br/>Valida cantidad y disponibilidad"]
+        catalogo["Repositorio de catálogo<br/>catalog.py<br/>Consulta productos y categorías"]
+        producto["Modelo Product<br/>entities.py<br/>Representa y serializa productos"]
+        database["Adaptador SQLite<br/>database.py<br/>Ejecuta SQL parametrizado"]
+
+        tienda -->|"Lee productos"| catalogo
+        tienda -->|"Resume"| carrito
+        api -->|"Valida operaciones"| carrito
+        api -->|"Lee catálogo y stock"| catalogo
+        catalogo -->|"Construye entidades"| producto
+        catalogo -->|"Solicita datos"| database
+    end
+
+    sqlite[("SQLite local<br/>Productos, marcas<br/>y categorías")]
+    database -->|"Consulta · SQL"| sqlite
+
+    classDef controller fill:#EAF2FF,stroke:#3973B9,color:#10233F,stroke-width:2px,font-size:16px;
+    classDef service fill:#E7F5F2,stroke:#318477,color:#153E3A,stroke-width:2px,font-size:16px;
+    classDef model fill:#F1F5F9,stroke:#7B8DA4,color:#25364D,stroke-width:2px,font-size:16px;
+    classDef dbcomponent fill:#FFF2D6,stroke:#C48A24,color:#4A3512,stroke-width:2px,font-size:16px;
+    class tienda,api controller;
+    class carrito,catalogo service;
+    class producto model;
+    class database,sqlite dbcomponent;
+    style backend fill:#F8FAFC,stroke:#7B8DA4,stroke-width:2px,color:#10233F
+    linkStyle default stroke:#58708E,stroke-width:2px;

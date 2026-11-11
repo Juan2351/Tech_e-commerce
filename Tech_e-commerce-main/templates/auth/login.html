@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Iniciar Sesión | LePetit{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Iniciar Sesión</h1>
+            <p class="muted">Ingresa tus credenciales para acceder a tu cuenta.</p>
+        </div>
+
+        {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form class="auth-form" method="post" action="{{ url_for('auth.login') }}">
+            {% if next_url %}
+                <input type="hidden" name="next" value="{{ next_url }}">
+            {% endif %}
+
+            <label for="email">
+                Correo Electrónico
+                <input id="email" type="email" name="email" placeholder="nombre@correo.com" required autocomplete="email">
+            </label>
+
+            <label for="password">
+                Contraseña
+                <input id="password" type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+            </label>
+
+            <button type="submit" class="button button-auth">Iniciar Sesión</button>
+        </form>
+
+        <div class="auth-footer-link">
+            <p>¿No tienes una cuenta aún? <a href="{{ url_for('auth.register') }}">Crear cuenta nueva</a></p>
+        </div>
+    </div>
+</section>
+{% endblock %}

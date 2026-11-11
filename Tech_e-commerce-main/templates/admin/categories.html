@@ -1,0 +1,140 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Categorías | LePetit Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-categories-container">
+    <div class="admin-page-header">
+        <div>
+            <h1>Gestión de Categorías</h1>
+            <p class="muted">Estructura y líneas de productos activas en Firebase Realtime Database.</p>
+        </div>
+        <div class="admin-header-actions">
+            <button type="button" class="button button-hero" data-modal-open="createCategoryModal">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                + Nueva Categoría
+            </button>
+        </div>
+    </div>
+
+    {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <!-- TABLA COMPLETA DE CATEGORÍAS -->
+    <div class="admin-panel">
+        <div class="admin-panel-header">
+            <h2>Categorías Registradas ({{ categories|length }})</h2>
+            <span class="muted small">Actualización en tiempo real</span>
+        </div>
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th style="width: 70px;">ID</th>
+                        <th>Nombre de la Categoría</th>
+                        <th>Descripción</th>
+                        <th style="width: 150px;">Productos</th>
+                        <th style="width: 170px; text-align: right;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in categories %}
+                    <tr>
+                        <td>
+                            <span class="badge badge-cat">#{{ cat.id_main_cat }}</span>
+                        </td>
+                        <td>
+                            <strong>{{ cat.nombre }}</strong>
+                        </td>
+                        <td class="muted">
+                            {{ cat.descripcion or 'Sin descripción asignada.' }}
+                        </td>
+                        <td>
+                            <span class="badge badge-success">
+                                {{ category_counts.get(cat.id_main_cat, 0) }} productos
+                            </span>
+                        </td>
+                        <td style="text-align: right;">
+                            <button type="button" class="button-action" 
+                                    data-modal-open="editCategoryModal"
+                                    data-cat-id="{{ cat.id_main_cat }}"
+                                    data-cat-name="{{ cat.nombre }}"
+                                    data-cat-desc="{{ cat.descripcion or '' }}">
+                                Editar
+                            </button>
+                            <form method="post" action="{{ url_for('admin.categories_manage') }}"
+                                  onsubmit="return confirm('¿Confirmas eliminar la categoría \'{{ cat.nombre }}\' en Firebase?');" style="display:inline;">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="id_main_cat" value="{{ cat.id_main_cat }}">
+                                <button type="submit" class="button-action button-danger">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- SUBVENTANA / MODAL CREAR NUEVA CATEGORÍA -->
+<div class="admin-modal" id="createCategoryModal" aria-hidden="true" role="dialog" aria-labelledby="createModalTitle">
+    <div class="admin-modal-overlay" data-modal-close></div>
+    <div class="admin-modal-card">
+        <div class="admin-modal-header">
+            <h3 id="createModalTitle">Nueva Categoría</h3>
+            <button type="button" class="admin-modal-close" data-modal-close aria-label="Cerrar ventana">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <form class="admin-modal-form" method="post" action="{{ url_for('admin.categories_manage') }}">
+            <input type="hidden" name="action" value="create">
+            <div class="admin-modal-body">
+                <label for="cat_create_nombre">
+                    Nombre de la Categoría
+                    <input id="cat_create_nombre" type="text" name="nombre" placeholder="Ej. Realidad Virtual & Drones" required maxlength="60">
+                </label>
+                <label for="cat_create_desc">
+                    Descripción Breve (Opcional)
+                    <textarea id="cat_create_desc" name="descripcion" rows="3" placeholder="Descripción de los artículos pertenecientes a esta línea..."></textarea>
+                </label>
+            </div>
+            <div class="admin-modal-footer">
+                <button type="button" class="button button-secondary" data-modal-close>Cancelar</button>
+                <button type="submit" class="button button-hero">+ Guardar Categoría</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- SUBVENTANA / MODAL EDITAR CATEGORÍA -->
+<div class="admin-modal" id="editCategoryModal" aria-hidden="true" role="dialog" aria-labelledby="editModalTitle">
+    <div class="admin-modal-overlay" data-modal-close></div>
+    <div class="admin-modal-card">
+        <div class="admin-modal-header">
+            <h3 id="editModalTitle">Editar Categoría</h3>
+            <button type="button" class="admin-modal-close" data-modal-close aria-label="Cerrar ventana">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <form class="admin-modal-form" method="post" action="{{ url_for('admin.categories_manage') }}">
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" id="edit_cat_id" name="id_main_cat" value="">
+            <div class="admin-modal-body">
+                <label for="edit_cat_nombre">
+                    Nombre de la Categoría
+                    <input id="edit_cat_nombre" type="text" name="nombre" required maxlength="60">
+                </label>
+                <label for="edit_cat_desc">
+                    Descripción
+                    <textarea id="edit_cat_desc" name="descripcion" rows="3"></textarea>
+                </label>
+            </div>
+            <div class="admin-modal-footer">
+                <button type="button" class="button button-secondary" data-modal-close>Cancelar</button>
+                <button type="submit" class="button button-hero">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

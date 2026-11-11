@@ -1,0 +1,21 @@
+{
+  "name": "lepetit-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "check": "vite build --emptyOutDir false",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.8",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.4",
+    "postcss-prefix-selector": "^2.1.1",
+    "vite": "^7.1.12"
+  }
+}

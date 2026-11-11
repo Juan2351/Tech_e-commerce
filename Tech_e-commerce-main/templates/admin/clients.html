@@ -1,0 +1,49 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Clientes | LePetit Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-clients-container">
+    <div class="admin-page-header">
+        <div>
+            <h1>Gestión de Usuarios y Clientes</h1>
+            <p class="muted">Cuentas registradas en Firebase Realtime Database con autenticación cifrada.</p>
+        </div>
+    </div>
+
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Correo Electrónico</th>
+                    <th>Rol de Acceso</th>
+                    <th>Teléfono</th>
+                    <th>Ciudad</th>
+                    <th>Fecha de Registro</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="user-row-name">
+                            <span class="user-avatar-small">{{ user.nombre[:1]|upper }}</span>
+                            <strong>{{ user.nombre }}</strong>
+                        </div>
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        <span class="badge {% if user.role == 'admin' %}badge-admin-role{% else %}badge-client-role{% endif %}">
+                            {{ user.role|upper }}
+                        </span>
+                    </td>
+                    <td>{{ user.telefono or 'No registrado' }}</td>
+                    <td>{{ user.ciudad or 'Colombia' }}</td>
+                    <td>{{ user.created_at or 'Reciente' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

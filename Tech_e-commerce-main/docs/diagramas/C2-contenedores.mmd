@@ -1,0 +1,29 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Aptos, Segoe UI, Arial, sans-serif","fontSize":"16px","primaryColor":"#EAF2FF","primaryTextColor":"#10233F","primaryBorderColor":"#3973B9","lineColor":"#58708E","secondaryColor":"#F1F5F9","tertiaryColor":"#E7F5F2","background":"#FFFFFF","mainBkg":"#FFFFFF","textColor":"#10233F"}}}%%
+flowchart LR
+    cliente(("Cliente<br/>Navega y agrega<br/>productos"))
+
+    subgraph lepetit["LePetit · sistema de comercio"]
+        direction LR
+        navegador["Navegador web<br/>HTML · CSS · JavaScript<br/>Muestra la tienda y consume la API"]
+        aplicacion["Aplicación web<br/>Python · Flask · Jinja<br/>Entrega páginas y valida operaciones"]
+        sqlite[("Base de datos local<br/>SQLite<br/>Catálogo, marcas y categorías")]
+        navegador -->|"HTML y API JSON<br/>HTTP local · HTTPS en despliegue"| aplicacion
+        aplicacion -->|"Consulta catálogo · SQL"| sqlite
+    end
+
+    cdn[("CDN de imágenes<br/>Servicio externo · HTTPS")]
+    cliente -->|"Navega la tienda"| navegador
+    navegador -.->|"Solicita imágenes · HTTPS"| cdn
+
+    classDef actor fill:#DBEAFE,stroke:#3973B9,color:#10233F,stroke-width:2px,font-size:16px;
+    classDef frontend fill:#EAF2FF,stroke:#3973B9,color:#10233F,stroke-width:2px,font-size:16px;
+    classDef backend fill:#DDEBFA,stroke:#3973B9,color:#10233F,stroke-width:2px,font-size:16px;
+    classDef database fill:#FFF2D6,stroke:#C48A24,color:#4A3512,stroke-width:2px,font-size:16px;
+    classDef external fill:#F1F5F9,stroke:#7B8DA4,color:#25364D,stroke-width:2px,font-size:16px;
+    style lepetit fill:#F8FAFC,stroke:#7B8DA4,stroke-width:2px,color:#10233F
+    class cliente actor;
+    class navegador frontend;
+    class aplicacion backend;
+    class sqlite database;
+    class cdn external;
+    linkStyle default stroke:#58708E,stroke-width:2px;

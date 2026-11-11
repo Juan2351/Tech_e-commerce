@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Pedido {{ order.order_number }} | LePetit{% endblock %}
+{% block content %}
+<section class="order-confirmation" aria-labelledby="order-confirmation-title">
+    <div class="order-confirmation-header">
+        <span class="order-confirmation-icon" aria-hidden="true">✓</span>
+        <p class="section-subtitle">PEDIDO RECIBIDO</p>
+        <h1 id="order-confirmation-title">Gracias, {{ order.customer_name }}.</h1>
+        <p>Registramos tu solicitud. Nuestro equipo confirmará existencias, entrega y pago contigo.</p>
+    </div>
+
+    <div class="order-number-card">
+        <span>Número de pedido</span>
+        <strong>{{ order.order_number }}</strong>
+        <span class="order-status-badge">Pendiente de confirmación</span>
+    </div>
+
+    <div class="order-summary-card">
+        <div class="order-summary-heading">
+            <h2>Resumen del pedido</h2>
+            <span>{{ order.created_at }}</span>
+        </div>
+        <div class="order-items-list">
+            {% for item in items %}
+            <div class="order-item-row">
+                <div>
+                    <strong>{{ item.product_name }}</strong>
+                    <span>{{ item.quantity }} × {{ item.unit_price_cop|cop_amount }}</span>
+                </div>
+                <strong>{{ item.line_total_cop|cop_amount }}</strong>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="order-total-row">
+            <span>Total estimado</span>
+            <strong>{{ order.total_cop|cop_amount }}</strong>
+        </div>
+        <p class="order-contact-details">
+            Te contactaremos por WhatsApp al <strong>{{ order.phone }}</strong>.
+            {% if order.delivery_address %}Entrega indicada: {{ order.delivery_address }}.{% endif %}
+        </p>
+    </div>
+
+    <div class="order-next-steps">
+        <a class="button button-hero" href="{{ whatsapp_url }}" target="_blank" rel="noopener noreferrer">
+            Confirmar por WhatsApp
+        </a>
+        <a class="button button-secondary" href="{{ url_for('shop.shop_view') }}">Seguir comprando</a>
+    </div>
+    <p class="order-payment-note">No se ha realizado ningún cobro. La compra se confirma cuando el equipo valide disponibilidad y acuerde contigo el método de pago.</p>
+</section>
+{% endblock %}

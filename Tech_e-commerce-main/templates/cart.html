@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Carrito | LePetit{% endblock %}
+{% block content %}
+<section>
+    <div class="section-heading">
+        <h1>Tu carrito</h1>
+        <a href="{{ url_for('shop.home') }}">Seguir explorando</a>
+    </div>
+    {% if items %}
+    <div class="cart-list">
+        {% for item in items %}
+        <article class="cart-item">
+            <img src="{{ item.product.image_url or url_for('static', filename='img/product-placeholder.svg') }}"
+                 alt="" data-product-category="{{ item.product.subcategoria }}" loading="lazy">
+            <div class="cart-product">
+                <h2><a href="{{ url_for('shop.product_detail', product_id=item.product.id_producto) }}">{{ item.product.nombre }}</a></h2>
+                <p>{{ item.product.precio|cop }} por unidad</p>
+                <p class="muted">Subtotal: {{ item.subtotal|cop }}</p>
+            </div>
+            <label class="quantity-control">
+                Cantidad
+                <input type="number" min="1" max="{{ item.product.stock }}" value="{{ item.quantity }}"
+                       data-cart-quantity="{{ item.product.id_producto }}">
+            </label>
+            <button type="button" class="button-secondary" data-cart-update="{{ item.product.id_producto }}">Actualizar</button>
+            <button type="button" class="button-secondary" data-cart-remove="{{ item.product.id_producto }}">Quitar</button>
+        </article>
+        {% endfor %}
+    </div>
+    <div class="cart-checkout-layout">
+        <div class="cart-total">
+            <p>Total del pedido</p>
+            <strong>{{ total|cop }}</strong>
+            <span>El total final se confirma con el equipo antes de pagar.</span>
+        </div>
+        <form class="checkout-card" action="{{ url_for('shop.create_order') }}" method="post">
+            <input type="hidden" name="checkout_token" value="{{ checkout_token }}">
+            <div class="checkout-card-heading">
+                <span class="section-subtitle">CASI LISTO</span>
+                <h2>Datos de contacto</h2>
+                <p>Crearemos tu número de pedido y te contactaremos para confirmar disponibilidad y entrega.</p>
+            </div>
+            <div class="checkout-fields">
+                <label for="checkout-name">Nombre completo
+                    <input id="checkout-name" name="nombre" type="text" maxlength="100"
+                           autocomplete="name" required>
+                </label>
+                <label for="checkout-phone">WhatsApp
+                    <input id="checkout-phone" name="telefono" type="tel" maxlength="24"
+                           autocomplete="tel" placeholder="+57 300 000 0000" required>
+                </label>
+                <label for="checkout-email">Correo electrónico <span>(opcional)</span>
+                    <input id="checkout-email" name="correo" type="email" maxlength="254"
+                           autocomplete="email">
+                </label>
+                <label for="checkout-address">Dirección o lugar de entrega <span>(opcional)</span>
+                    <input id="checkout-address" name="direccion" type="text" maxlength="250"
+                           autocomplete="street-address">
+                </label>
+                <label class="checkout-notes-field" for="checkout-notes">Notas del pedido <span>(opcional)</span>
+                    <textarea id="checkout-notes" name="notas" maxlength="500" rows="3"
+                              placeholder="Indicaciones para contactarte o entregar el pedido"></textarea>
+                </label>
+            </div>
+            <button class="button button-hero checkout-submit" type="submit">
+                Crear pedido y continuar
+            </button>
+            <p class="checkout-disclaimer">
+                Este paso no realiza ningún cobro ni reserva inventario. El pedido queda pendiente de confirmación por WhatsApp.
+            </p>
+        </form>
+    </div>
+    {% else %}
+    <p class="empty-state">Tu carrito está vacío.</p>
+    <a class="button" href="{{ url_for('shop.home') }}">Ver productos</a>
+    {% endif %}
+</section>
+{% endblock %}
