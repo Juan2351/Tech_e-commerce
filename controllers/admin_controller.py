@@ -265,12 +265,12 @@ def categories_manage():
                 return redirect(url_for("admin.categories_manage"))
 
     categories = catalog.fetch_categories()
-    products_raw = FirebaseDB.get_all_products_raw()
-    
+    all_products = catalog.fetch_products()
+
     # Calcular conteo de productos por categoría
     category_counts = {}
-    for p in products_raw.values():
-        cid = p.get("id_main_cat")
+    for p in all_products:
+        cid = p.id_main_cat
         if cid is not None:
             category_counts[cid] = category_counts.get(cid, 0) + 1
 

@@ -48,8 +48,21 @@ CREATE INDEX IF NOT EXISTS idx_producto_marca
 CREATE INDEX IF NOT EXISTS idx_producto_precio
     ON producto (precio);
 
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre_usuario TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    rol TEXT NOT NULL DEFAULT 'cliente'
+        CHECK (rol IN ('admin', 'cliente', 'vip')),
+    telefono TEXT NOT NULL DEFAULT '',
+    direccion_entrega TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
     order_number TEXT NOT NULL UNIQUE,
     checkout_token TEXT NOT NULL UNIQUE,
     status TEXT NOT NULL DEFAULT 'pending_confirmation'
@@ -60,7 +73,10 @@ CREATE TABLE IF NOT EXISTS orders (
     delivery_address TEXT NOT NULL DEFAULT '',
     notes TEXT NOT NULL DEFAULT '',
     total_cop INTEGER NOT NULL CHECK (total_cop >= 0),
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id)
+        REFERENCES usuarios (id)
+        ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS order_items (
@@ -78,5 +94,7 @@ CREATE TABLE IF NOT EXISTS order_items (
 
 CREATE INDEX IF NOT EXISTS idx_orders_created_at
     ON orders (created_at);
+CREATE INDEX IF NOT EXISTS idx_orders_user_id
+    ON orders (user_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_order
     ON order_items (order_id);

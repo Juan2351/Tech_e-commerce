@@ -166,11 +166,21 @@ def initialize_database(connection, schema_path, seed_path, csv_path):
             WHERE type = 'table' AND name = 'producto'
             """
         ).fetchone()
+        order_columns = {
+            row["name"]
+            for row in connection.execute("PRAGMA table_info(orders)")
+        }
+        if order_columns and "user_id" not in order_columns:
+            connection.execute(
+                """
+                ALTER TABLE orders
+                ADD COLUMN user_id INTEGER REFERENCES usuarios (id) ON DELETE SET NULL
+                """
+            )
         schema = Path(schema_path).read_text(encoding="utf-8")
         connection.executescript(schema)
-        if not has_catalog_table:
-            seed = Path(seed_path).read_text(encoding="utf-8")
-            connection.executescript(seed)
+        seed = Path(seed_path).read_text(encoding="utf-8")
+        connection.executescript(seed)
 
         connection.execute("BEGIN IMMEDIATE")
         product_count = connection.execute(

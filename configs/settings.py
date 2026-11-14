@@ -27,7 +27,7 @@ class Config:
     DATABASE_SCHEMA_PATH = str(BASE_DIR / "database" / "schema.sql")
     DATABASE_SEED_PATH = str(BASE_DIR / "database" / "seed.sql")
     USD_TO_COP_RATE = os.getenv("USD_TO_COP_RATE", "4200")
-    DATABASE_BACKEND = os.getenv("DATABASE_BACKEND", "firebase")
+    DATABASE_BACKEND = os.getenv("DATABASE_BACKEND", "sqlite")
     FIREBASE_DATABASE_URL = os.getenv(
         "FIREBASE_DATABASE_URL", "https://lepetit-e4386-default-rtdb.firebaseio.com"
     ).rstrip("/")

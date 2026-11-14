@@ -226,6 +226,22 @@ def create_order():
         if previous:
             order_number = previous["order_number"]
         else:
+            user_session = session.get("user") or {}
+            raw_user_id = user_session.get("id") if isinstance(user_session, dict) else None
+            resolved_user_id = None
+            if isinstance(raw_user_id, int) and not isinstance(raw_user_id, bool):
+                existing_user = connection.execute(
+                    "SELECT id FROM usuarios WHERE id = ?", (raw_user_id,)
+                ).fetchone()
+                if existing_user:
+                    resolved_user_id = existing_user["id"]
+            elif isinstance(raw_user_id, str) and raw_user_id.isdigit():
+                existing_user = connection.execute(
+                    "SELECT id FROM usuarios WHERE id = ?", (int(raw_user_id),)
+                ).fetchone()
+                if existing_user:
+                    resolved_user_id = existing_user["id"]
+
             order_number = (
                 f"LP-{datetime.now(timezone.utc):%Y%m%d}-"
                 f"{secrets.token_hex(4).upper()}"
@@ -233,11 +249,12 @@ def create_order():
             cursor = connection.execute(
                 """
                 INSERT INTO orders (
-                    order_number, checkout_token, customer_name, phone, email,
+                    user_id, order_number, checkout_token, customer_name, phone, email,
                     delivery_address, notes, total_cop
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
+                    resolved_user_id,
                     order_number,
                     checkout_token,
                     customer_name,

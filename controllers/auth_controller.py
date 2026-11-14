@@ -50,16 +50,20 @@ def login():
         else:
             user = authenticate_user(email, password)
             if user:
+                rol = user.get("rol") or user.get("role", "cliente")
+                nombre = user.get("nombre_usuario") or user.get("nombre", "")
                 session["user"] = {
                     "id": user["id"],
-                    "nombre": user["nombre"],
+                    "nombre": nombre,
+                    "nombre_usuario": nombre,
                     "email": user["email"],
-                    "role": user.get("role", "cliente"),
+                    "role": rol,
+                    "rol": rol,
                 }
-                flash(f"¡Bienvenido de nuevo, {user['nombre']}!", "success")
+                flash(f"¡Bienvenido de nuevo, {nombre}!", "success")
                 if next_url and next_url.startswith("/"):
                     return redirect(next_url)
-                if user.get("role") == "admin":
+                if rol == "admin":
                     return redirect(url_for("admin.dashboard"))
                 return redirect(url_for("shop.home"))
             else:
@@ -94,11 +98,15 @@ def register():
                     ciudad=ciudad,
                     role="cliente",
                 )
+                rol = user.get("rol") or user.get("role", "cliente")
+                nombre_usuario = user.get("nombre_usuario") or user.get("nombre", nombre)
                 session["user"] = {
                     "id": user["id"],
-                    "nombre": user["nombre"],
+                    "nombre": nombre_usuario,
+                    "nombre_usuario": nombre_usuario,
                     "email": user["email"],
-                    "role": "cliente",
+                    "role": rol,
+                    "rol": rol,
                 }
                 flash("¡Registro exitoso! Bienvenido a LePetit.", "success")
                 return redirect(url_for("shop.home"))

@@ -91,11 +91,59 @@ class CartOrderTests(unittest.TestCase):
             items = get_db().execute(
                 "SELECT * FROM order_items WHERE order_id = ?", (order["id"],)
             ).fetchall()
+        self.assertIsNone(order["user_id"])
         self.assertEqual(order["phone"], "+57 314 555 1234")
         self.assertEqual(order["status"], "pending_confirmation")
         self.assertEqual(order["total_cop"], 84000)
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0]["quantity"], 2)
+
+    def test_checkout_links_order_to_usuario_and_sets_null_on_delete(self):
+        from models.auth_model import register_user
+        with self.app.app_context():
+            vip_user = register_user(
+                nombre="Camila VIP",
+                email="camila.vip@example.com",
+                password="secretpassword",
+                telefono="+57 310 000 1111",
+                direccion_entrega="Calle 10 #20-30, Pereira",
+                role="vip",
+            )
+
+        with self.client.session_transaction() as current_session:
+            current_session["user"] = {
+                "id": vip_user["id"],
+                "nombre": vip_user["nombre_usuario"],
+                "email": vip_user["email"],
+                "role": vip_user["rol"],
+            }
+            current_session["cart"] = {"LAP-ORDER-001": 2}
+            current_session["checkout_token"] = "vip-checkout-token"
+
+        response = self.client.post("/pedidos", data={
+            "checkout_token": "vip-checkout-token",
+            "nombre": "Camila VIP",
+            "telefono": "+57 310 000 1111",
+            "correo": "camila.vip@example.com",
+            "direccion": "Calle 10 #20-30, Pereira",
+        })
+        self.assertEqual(response.status_code, 302)
+
+        with self.app.app_context():
+            db = get_db()
+            order = db.execute(
+                "SELECT * FROM orders WHERE checkout_token = ?",
+                ("vip-checkout-token",),
+            ).fetchone()
+            self.assertEqual(order["user_id"], vip_user["id"])
+
+            db.execute("DELETE FROM usuarios WHERE id = ?", (vip_user["id"],))
+            db.commit()
+
+            order_after_delete = db.execute(
+                "SELECT * FROM orders WHERE id = ?", (order["id"],)
+            ).fetchone()
+            self.assertIsNone(order_after_delete["user_id"])
 
     def test_checkout_rejects_missing_or_invalid_form_token(self):
         response = self.client.post("/pedidos", data={

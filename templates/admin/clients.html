@@ -6,7 +6,7 @@
     <div class="admin-page-header">
         <div>
             <h1>Gestión de Usuarios y Clientes</h1>
-            <p class="muted">Cuentas registradas en Firebase Realtime Database con autenticación cifrada.</p>
+            <p class="muted">Cuentas registradas en la base de datos con autenticación cifrada y control de roles (admin, cliente, vip).</p>
         </div>
     </div>
 
@@ -14,31 +14,33 @@
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>Nombre</th>
+                    <th>Usuario</th>
                     <th>Correo Electrónico</th>
                     <th>Rol de Acceso</th>
                     <th>Teléfono</th>
-                    <th>Ciudad</th>
+                    <th>Dirección de Entrega</th>
                     <th>Fecha de Registro</th>
                 </tr>
             </thead>
             <tbody>
                 {% for user in users %}
+                {% set user_name = user.nombre_usuario or user.nombre %}
+                {% set user_role = user.rol or user.role %}
                 <tr>
                     <td>
                         <div class="user-row-name">
-                            <span class="user-avatar-small">{{ user.nombre[:1]|upper }}</span>
-                            <strong>{{ user.nombre }}</strong>
+                            <span class="user-avatar-small">{{ user_name[:1]|upper }}</span>
+                            <strong>{{ user_name }}</strong>
                         </div>
                     </td>
                     <td>{{ user.email }}</td>
                     <td>
-                        <span class="badge {% if user.role == 'admin' %}badge-admin-role{% else %}badge-client-role{% endif %}">
-                            {{ user.role|upper }}
+                        <span class="badge {% if user_role == 'admin' %}badge-admin-role{% elif user_role == 'vip' %}badge-vip-role{% else %}badge-client-role{% endif %}">
+                            {{ user_role|upper }}
                         </span>
                     </td>
                     <td>{{ user.telefono or 'No registrado' }}</td>
-                    <td>{{ user.ciudad or 'Colombia' }}</td>
+                    <td>{{ user.direccion_entrega or user.ciudad or 'Colombia' }}</td>
                     <td>{{ user.created_at or 'Reciente' }}</td>
                 </tr>
                 {% endfor %}

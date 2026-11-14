@@ -15,7 +15,7 @@ api = Blueprint("api", __name__, url_prefix="/api/v1")
 
 @api.get("/salud")
 def database_health():
-    backend = current_app.config.get("DATABASE_BACKEND", "firebase")
+    backend = current_app.config.get("DATABASE_BACKEND", "sqlite")
     if not current_app.config.get("TESTING") and backend.lower() == "firebase":
         from models.firebase_db import FirebaseDB
         ok = FirebaseDB.ping()
@@ -92,10 +92,12 @@ def issue_access_token():
     if not user or not user.get("id"):
         return error_response("invalid_credentials", "Credenciales incorrectas.", 401)
 
+    rol = user.get("rol") or user.get("role", "cliente")
     access_token = create_access_token(
         identity=str(user["id"]),
         additional_claims={
-            "role": user.get("role", "cliente"),
+            "role": rol,
+            "rol": rol,
             "email": user.get("email", ""),
         },
     )

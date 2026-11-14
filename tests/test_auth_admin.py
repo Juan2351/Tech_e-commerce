@@ -87,6 +87,54 @@ class AuthAndAdminTests(unittest.TestCase):
         with self.assertRaises(AuthError):
             register_user("Valente", "valente@correo.com", "123")  # contraseña corta
 
+        with self.assertRaises(AuthError):
+            register_user("Valente", "valente@correo.com", "123456", role="superusuario")
+
+    def test_sqlite_usuarios_authentication_and_roles(self):
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from models.database import get_db
+
+        with TemporaryDirectory() as temp_dir:
+            app = create_app({
+                "TESTING": True,
+                "SECRET_KEY": "test-secret",
+                "DATABASE_BACKEND": "sqlite",
+                "DATABASE_PATH": str(Path(temp_dir) / "auth_test.sqlite3"),
+            })
+            with app.app_context():
+                user = register_user(
+                    nombre="Laura VIP",
+                    email="laura@lepetit.com",
+                    password="password123",
+                    telefono="+57 300 111 2233",
+                    direccion_entrega="Av Circunvalar, Pereira",
+                    role="vip",
+                )
+                self.assertEqual(user["rol"], "vip")
+                self.assertEqual(user["nombre_usuario"], "Laura VIP")
+                self.assertEqual(user["direccion_entrega"], "Av Circunvalar, Pereira")
+
+                auth_by_email = authenticate_user("laura@lepetit.com", "password123")
+                self.assertIsNotNone(auth_by_email)
+                self.assertEqual(auth_by_email["id"], user["id"])
+                self.assertEqual(auth_by_email["rol"], "vip")
+
+                auth_by_username = authenticate_user("Laura VIP", "password123")
+                self.assertIsNotNone(auth_by_username)
+                self.assertEqual(auth_by_username["id"], user["id"])
+
+                self.assertIsNone(authenticate_user("laura@lepetit.com", "wrongpass"))
+
+                db = get_db()
+                with self.assertRaises(Exception):
+                    db.execute(
+                        """
+                        INSERT INTO usuarios (nombre_usuario, email, password_hash, rol)
+                        VALUES ('Invalido', 'inv@test.com', 'hash', 'invitado')
+                        """
+                    )
+
     def test_logout_clears_session(self):
         with self.client.session_transaction() as sess:
             sess["user"] = {"id": "1", "nombre": "Test", "email": "t@t.com", "role": "cliente"}
