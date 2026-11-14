@@ -17,6 +17,7 @@ from flask import (
     url_for,
 )
 
+from controllers.auth_controller import login_required
 from models import catalog
 from models.auth_model import get_user_by_id, get_vip_discount_rate
 from models.database import get_db
@@ -356,5 +357,53 @@ def order_confirmation():
         order=order,
         items=items,
         whatsapp_url=whatsapp_url,
+        cart_count=cart_count(session.get("cart", {})),
+    )
+
+
+@shop.get("/mis-pedidos")
+@login_required
+def my_orders():
+    user_session = session.get("user") or {}
+    user_id = user_session.get("id")
+    connection = get_db()
+    orders_rows = connection.execute(
+        """
+        SELECT id, order_number, status, customer_name, phone, email,
+               delivery_address, notes, total_cop, created_at
+        FROM orders
+        WHERE user_id = ?
+        ORDER BY created_at DESC, id DESC
+        """,
+        (user_id,),
+    ).fetchall()
+
+    status_labels = {
+        "pending_confirmation": "Pendiente de confirmación",
+        "confirmed": "Confirmado",
+        "cancelled": "Cancelado",
+    }
+    orders_data = []
+    for order_row in orders_rows:
+        items_rows = connection.execute(
+            """
+            SELECT product_id, product_name, quantity, unit_price_cop, line_total_cop
+            FROM order_items
+            WHERE order_id = ?
+            ORDER BY id
+            """,
+            (order_row["id"],),
+        ).fetchall()
+        orders_data.append({
+            "order": order_row,
+            "status_label": status_labels.get(
+                order_row["status"], order_row["status"]
+            ),
+            "lines": items_rows,
+        })
+
+    return render_template(
+        "my_orders.html",
+        orders=orders_data,
         cart_count=cart_count(session.get("cart", {})),
     )

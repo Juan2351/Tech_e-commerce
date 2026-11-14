@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Mis Pedidos | LePetit{% endblock %}
+{% block content %}
+<section>
+    <div class="section-heading">
+        <div>
+            <span class="section-subtitle">HISTORIAL DE COMPRAS</span>
+            <h1>Mis pedidos</h1>
+        </div>
+        <a href="{{ url_for('shop.shop_view') }}">Seguir comprando</a>
+    </div>
+
+    {% if orders %}
+    <div class="orders-history-list">
+        {% for entry in orders %}
+        <article class="order-summary-card" style="margin-bottom: 1.5rem;">
+            <div class="order-summary-heading">
+                <div>
+                    <h2>Pedido {{ entry.order.order_number }}</h2>
+                    <span class="muted">Fecha: {{ entry.order.created_at }}</span>
+                </div>
+                <span class="order-status-badge status-{{ entry.order.status }}">
+                    {{ entry.status_label }}
+                </span>
+            </div>
+
+            <div class="order-items-list">
+                {% for item in entry.lines %}
+                <div class="order-item-row">
+                    <div>
+                        <strong>{{ item.product_name }}</strong>
+                        <span>{{ item.quantity }} × {{ item.unit_price_cop|cop_amount }}</span>
+                    </div>
+                    <strong>{{ item.line_total_cop|cop_amount }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="order-total-row">
+                <span>Total del pedido</span>
+                <strong>{{ entry.order.total_cop|cop_amount }}</strong>
+            </div>
+            {% if entry.order.delivery_address %}
+            <p class="order-contact-details">
+                Dirección de entrega: <strong>{{ entry.order.delivery_address }}</strong>
+            </p>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty-state">Aún no tienes pedidos registrados con tu cuenta.</p>
+    <a class="button" href="{{ url_for('shop.shop_view') }}">Explorar catálogo</a>
+    {% endif %}
+</section>
+{% endblock %}

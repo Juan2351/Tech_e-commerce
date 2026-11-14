@@ -189,6 +189,51 @@ class CartOrderTests(unittest.TestCase):
         self.assertIn(b'value="carlos@example.com"', response.data)
         self.assertIn(b'value="Cra 7 # 15-20, Pereira"', response.data)
 
+    def test_authenticated_user_can_view_only_own_orders_in_mis_pedidos(self):
+        from models.auth_model import register_user
+        with self.app.app_context():
+            user1 = register_user(
+                nombre="Usuario Uno",
+                email="uno@example.com",
+                password="password123",
+            )
+            user2 = register_user(
+                nombre="Usuario Dos",
+                email="dos@example.com",
+                password="password123",
+            )
+            db = get_db()
+            db.execute(
+                """
+                INSERT INTO orders (
+                    user_id, order_number, checkout_token, status,
+                    customer_name, phone, email, delivery_address, total_cop
+                ) VALUES
+                    (?, 'LP-20261114-AAAA1111', 'tok-1', 'confirmed', 'Usuario Uno', '+573001112233', 'uno@example.com', 'Pereira', 84000),
+                    (?, 'LP-20261114-BBBB2222', 'tok-2', 'pending_confirmation', 'Usuario Dos', '+573004445566', 'dos@example.com', 'Bogotá', 42000)
+                """,
+                (user1["id"], user2["id"]),
+            )
+            db.commit()
+
+        unauth_resp = self.client.get("/mis-pedidos", follow_redirects=False)
+        self.assertEqual(unauth_resp.status_code, 302)
+        self.assertIn("/login", unauth_resp.headers["Location"])
+
+        with self.client.session_transaction() as current_session:
+            current_session["user"] = {
+                "id": user1["id"],
+                "nombre": user1["nombre_usuario"],
+                "email": user1["email"],
+                "role": user1["rol"],
+            }
+
+        response = self.client.get("/mis-pedidos")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"LP-20261114-AAAA1111", response.data)
+        self.assertIn(b"Confirmado", response.data)
+        self.assertNotIn(b"LP-20261114-BBBB2222", response.data)
+
     def test_checkout_rejects_missing_or_invalid_form_token(self):
         response = self.client.post("/pedidos", data={
             "checkout_token": "forged-token",
