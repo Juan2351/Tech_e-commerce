@@ -142,7 +142,13 @@ def cart():
     cart_data = get_session_cart(session)
     user_session = session.get("user")
     items, subtotal = cart_summary(cart_data)
-    pricing = calculate_cart_totals(subtotal, user_session)
+    applied_code = session.get("applied_coupon", "")
+    active_coupon = catalog.get_coupon_by_code(applied_code) if applied_code else None
+    if applied_code and not active_coupon:
+        session.pop("applied_coupon", None)
+    pricing = calculate_cart_totals(
+        subtotal, user_session, items=items, coupon=active_coupon
+    )
     save_session_cart(session, cart_data)
     if items and not session.get("checkout_token"):
         session["checkout_token"] = secrets.token_urlsafe(32)
@@ -174,12 +180,59 @@ def cart():
         subtotal=pricing["subtotal"],
         discount_amount=pricing["discount_amount"],
         discount_percent=pricing["discount_percent"],
+        vip_discount_amount=pricing["vip_discount_amount"],
+        coupon_code=pricing["coupon_code"],
+        coupon_percent=pricing["coupon_percent"],
+        coupon_discount_amount=pricing["coupon_discount_amount"],
+        coupon_category_name=pricing["coupon_category_name"],
         is_vip=pricing["is_vip"],
         total=pricing["total"],
         checkout_defaults=checkout_defaults,
         cart_count=cart_count(cart_data),
         checkout_token=session.get("checkout_token", ""),
     )
+
+
+@shop.post("/carrito/cupon")
+def apply_coupon():
+    action = request.form.get("action", "apply").strip()
+    if action == "remove":
+        session.pop("applied_coupon", None)
+        flash("Cupón promocional retirado del carrito.", "success")
+        return redirect(url_for("shop.cart"))
+
+    codigo = request.form.get("codigo", "").strip().upper()
+    if not codigo:
+        flash("Ingresa un código de cupón válido.", "error")
+        return redirect(url_for("shop.cart"))
+
+    coupon = catalog.get_coupon_by_code(codigo)
+    if not coupon:
+        flash(f"El cupón '{codigo}' no existe o se encuentra inactivo.", "error")
+        return redirect(url_for("shop.cart"))
+
+    cart_data = get_session_cart(session)
+    items, _subtotal = cart_summary(cart_data)
+    target_cat = coupon.get("id_main_cat")
+    if target_cat not in (None, "", 0, "0"):
+        has_matching = any(
+            str(getattr(item.get("product"), "id_main_cat", "")) == str(target_cat)
+            for item in items
+        )
+        if not has_matching:
+            cat_label = coupon.get("categoria_nombre") or f"categoría #{target_cat}"
+            flash(
+                f"El cupón '{codigo}' aplica exclusivamente para productos de '{cat_label}'.",
+                "error",
+            )
+            return redirect(url_for("shop.cart"))
+
+    session["applied_coupon"] = coupon["codigo"]
+    flash(
+        f"¡Cupón '{coupon['codigo']}' ({int(coupon['porcentaje_descuento'])}% Dto.) aplicado con éxito!",
+        "success",
+    )
+    return redirect(url_for("shop.cart"))
 
 
 @shop.post("/pedidos")
@@ -231,10 +284,23 @@ def create_order():
 
     rate = Decimal(str(current_app.config["USD_TO_COP_RATE"]))
     discount_rate = get_vip_discount_rate(session.get("user"))
-    price_multiplier = Decimal("1.00") - discount_rate
+    applied_code = session.get("applied_coupon", "")
+    active_coupon = catalog.get_coupon_by_code(applied_code) if applied_code else None
+    coupon_rate = Decimal("0.00")
+    coupon_cat_id = None
+    if active_coupon and active_coupon.get("activo", 1):
+        coupon_rate = Decimal(str(active_coupon.get("porcentaje_descuento", 0))) / Decimal("100")
+        coupon_cat_id = active_coupon.get("id_main_cat")
+
     order_lines = []
     for item in items:
         product = item["product"]
+        item_coupon_rate = Decimal("0.00")
+        if coupon_rate > Decimal("0.00"):
+            if coupon_cat_id in (None, "", 0, "0") or str(getattr(product, "id_main_cat", "")) == str(coupon_cat_id):
+                item_coupon_rate = coupon_rate
+        combined_rate = min(Decimal("0.90"), discount_rate + item_coupon_rate)
+        price_multiplier = Decimal("1.00") - combined_rate
         unit_price_cop = int(
             (product.precio * rate * price_multiplier).quantize(
                 Decimal("1"), rounding=ROUND_HALF_UP
@@ -323,6 +389,7 @@ def create_order():
     save_session_cart(session, {})
     session["last_order_number"] = order_number
     session.pop("checkout_token", None)
+    session.pop("applied_coupon", None)
     return redirect(url_for("shop.order_confirmation"))
 
 

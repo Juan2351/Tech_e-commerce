@@ -98,3 +98,17 @@ CREATE INDEX IF NOT EXISTS idx_orders_user_id
     ON orders (user_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_order
     ON order_items (order_id);
+
+CREATE TABLE IF NOT EXISTS cupones (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo TEXT NOT NULL UNIQUE,
+    porcentaje_descuento NUMERIC NOT NULL
+        CHECK (porcentaje_descuento > 0 AND porcentaje_descuento <= 90),
+    id_main_cat INTEGER,
+    activo INTEGER NOT NULL DEFAULT 1
+        CHECK (activo IN (0, 1)),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_main_cat)
+        REFERENCES categoria_principal (id_main_cat)
+        ON DELETE CASCADE
+);

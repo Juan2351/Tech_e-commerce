@@ -26,3 +26,8 @@ INSERT OR IGNORE INTO subcategoria (id_subcat, id_main_cat, nombre) VALUES
     (13, 8, 'Smartwatches'),
     (14, 9, 'SSD & Networking'),
     (15, 10, 'Power & Docks');
+
+INSERT OR IGNORE INTO cupones (codigo, porcentaje_descuento, id_main_cat, activo) VALUES
+    ('LEPETIT10', 10, NULL, 1),
+    ('LAPTOPS15', 15, 4, 1),
+    ('SMART15', 15, 1, 1);

@@ -29,13 +29,35 @@
     </div>
     <div class="cart-checkout-layout">
         <div class="cart-total">
-            {% if is_vip %}
+            {% if is_vip or coupon_code %}
             <p class="vip-discount-summary">Subtotal: {{ subtotal|cop }}</p>
-            <p class="vip-discount-badge">Beneficio VIP ({{ discount_percent }}% dcto.): -{{ discount_amount|cop }}</p>
+            {% endif %}
+            {% if is_vip %}
+            <p class="vip-discount-badge">Beneficio VIP ({{ discount_percent }}% dcto.): -{{ vip_discount_amount|cop }}</p>
+            {% endif %}
+            {% if coupon_code %}
+            <p class="vip-discount-badge">
+                Cupón {{ coupon_code }} ({{ coupon_percent }}% dcto.{% if coupon_category_name %} en {{ coupon_category_name }}{% endif %}): -{{ coupon_discount_amount|cop }}
+            </p>
             {% endif %}
             <p>Total del pedido</p>
             <strong>{{ total|cop }}</strong>
             <span>El total final se confirma con el equipo antes de pagar.</span>
+
+            <div class="coupon-box" style="margin-top: 0.85rem; padding-top: 0.85rem; border-top: 1px solid var(--border-color);">
+                {% if coupon_code %}
+                <form method="post" action="{{ url_for('shop.apply_coupon') }}" style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                    <input type="hidden" name="action" value="remove">
+                    <span style="font-size: 0.8rem; color: var(--success);">Cupón <strong>{{ coupon_code }}</strong> activo</span>
+                    <button type="submit" class="button-secondary button-sm">Quitar cupón</button>
+                </form>
+                {% else %}
+                <form method="post" action="{{ url_for('shop.apply_coupon') }}" style="display: flex; gap: 0.45rem; align-items: center;">
+                    <input type="text" name="codigo" placeholder="Código de cupón (ej. LEPETIT10)" maxlength="30" aria-label="Código de cupón promocional" style="flex: 1; min-height: 2.2rem; font-size: 0.82rem;">
+                    <button type="submit" class="button-secondary button-sm">Aplicar</button>
+                </form>
+                {% endif %}
+            </div>
         </div>
         <form class="checkout-card" action="{{ url_for('shop.create_order') }}" method="post">
             <input type="hidden" name="checkout_token" value="{{ checkout_token }}">

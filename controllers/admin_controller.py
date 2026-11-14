@@ -220,6 +220,7 @@ def product_delete(product_id):
 
 
 @admin.route("/categorias", methods=["GET", "POST"])
+@admin.route("/cupones", methods=["GET", "POST"])
 @admin_required
 def categories_manage():
     error = None
@@ -240,7 +241,7 @@ def categories_manage():
                     "imagen": "",
                 }
                 catalog.save_category(new_cat)
-                flash(f"Categoría '{nombre}' creada exitosamente en Firebase.", "success")
+                flash(f"Categoría '{nombre}' creada exitosamente.", "success")
                 return redirect(url_for("admin.categories_manage"))
 
         elif action == "edit":
@@ -261,11 +262,65 @@ def categories_manage():
             cat_id = request.form.get("id_main_cat")
             if cat_id:
                 catalog.delete_category(int(cat_id))
-                flash("Categoría eliminada de Firebase.", "success")
+                flash("Categoría eliminada correctamente.", "success")
+                return redirect(url_for("admin.categories_manage"))
+
+        elif action == "adjust_prices":
+            raw_cat = request.form.get("id_main_cat", "").strip()
+            raw_pct = request.form.get("percent_change", "0").strip()
+            try:
+                target_cat = int(raw_cat) if raw_cat and raw_cat != "all" else None
+                pct = float(raw_pct)
+                updated_count = catalog.apply_category_price_adjustment(target_cat, pct)
+                direction = "descuento" if pct < 0 else "incremento"
+                flash(
+                    f"Se aplicó un {direction} del {abs(pct):g}% sobre {updated_count} productos.",
+                    "success",
+                )
+                return redirect(url_for("admin.categories_manage"))
+            except ValueError as err:
+                error = str(err)
+
+        elif action == "coupon_save":
+            codigo = request.form.get("codigo", "").strip()
+            raw_pct = request.form.get("porcentaje_descuento", "10").strip()
+            raw_cat = request.form.get("id_main_cat", "").strip()
+            try:
+                cat_val = int(raw_cat) if raw_cat and raw_cat != "all" else None
+                saved = catalog.save_coupon(
+                    codigo=codigo,
+                    porcentaje_descuento=float(raw_pct),
+                    id_main_cat=cat_val,
+                    activo=True,
+                )
+                flash(
+                    f"Cupón '{saved['codigo']}' ({int(saved['porcentaje_descuento'])}% Dto.) guardado exitosamente.",
+                    "success",
+                )
+                return redirect(url_for("admin.categories_manage"))
+            except ValueError as err:
+                error = str(err)
+
+        elif action == "coupon_toggle":
+            coupon_id = request.form.get("coupon_id")
+            if coupon_id:
+                catalog.toggle_coupon(int(coupon_id))
+                flash("Estado del cupón actualizado.", "success")
+                return redirect(url_for("admin.categories_manage"))
+
+        elif action == "coupon_delete":
+            coupon_id = request.form.get("coupon_id")
+            if coupon_id:
+                catalog.delete_coupon(int(coupon_id))
+                flash("Cupón eliminado.", "success")
                 return redirect(url_for("admin.categories_manage"))
 
     categories = catalog.fetch_categories()
     all_products = catalog.fetch_products()
+    try:
+        coupons = catalog.fetch_coupons()
+    except Exception:
+        coupons = []
 
     # Calcular conteo de productos por categoría
     category_counts = {}
@@ -278,6 +333,7 @@ def categories_manage():
         "admin/categories.html",
         categories=categories,
         category_counts=category_counts,
+        coupons=coupons,
         error=error,
     )
 

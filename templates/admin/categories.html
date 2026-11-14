@@ -63,7 +63,7 @@
                                 Editar
                             </button>
                             <form method="post" action="{{ url_for('admin.categories_manage') }}"
-                                  onsubmit="return confirm('¿Confirmas eliminar la categoría \'{{ cat.nombre }}\' en Firebase?');" style="display:inline;">
+                                  onsubmit="return confirm('¿Confirmas eliminar la categoría \'{{ cat.nombre }}\'?');" style="display:inline;">
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="id_main_cat" value="{{ cat.id_main_cat }}">
                                 <button type="submit" class="button-action button-danger">Eliminar</button>
@@ -73,6 +73,110 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- GESTIÓN DE DESCUENTOS / AJUSTE DE PRECIOS POR CATEGORÍA Y CUPONES -->
+    <div class="admin-two-cols" style="margin-top: 1.75rem;">
+        <div class="admin-panel">
+            <div class="admin-panel-header">
+                <h2>Ajuste de Precios y Descuentos por Categoría</h2>
+                <span class="badge badge-cat">Masivo</span>
+            </div>
+            <p class="muted small" style="margin-bottom: 1rem;">
+                Aplica un descuento porcentual (ej. <code>-15</code> para rebajar 15%) o un incremento (ej. <code>10</code> para subir 10%) a todos los productos de una categoría específica o de toda la tienda.
+            </p>
+            <form method="post" action="{{ url_for('admin.categories_manage') }}" style="display: grid; gap: 0.9rem;">
+                <input type="hidden" name="action" value="adjust_prices">
+                <label style="display: grid; gap: 0.35rem; font-size: 0.85rem;">
+                    <span>Línea / Categoría objetivo <span class="required-asterisk">*</span></span>
+                    <select name="id_main_cat" required>
+                        <option value="all">Todas las categorías (Catálogo completo)</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id_main_cat }}">{{ cat.nombre }} ({{ category_counts.get(cat.id_main_cat, 0) }} productos)</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label style="display: grid; gap: 0.35rem; font-size: 0.85rem;">
+                    <span>Porcentaje de ajuste (%) <span class="required-asterisk">*</span></span>
+                    <input type="number" name="percent_change" step="0.5" min="-90" max="200" value="-10" required placeholder="Ej. -15 para 15% de descuento">
+                </label>
+                <button type="submit" class="button button-hero">Aplicar Ajuste de Precios</button>
+            </form>
+        </div>
+
+        <div class="admin-panel">
+            <div class="admin-panel-header">
+                <h2>Cupones Promocionales (Globales o por Categoría)</h2>
+                <span class="badge badge-success">{{ coupons|length if coupons is defined else 0 }} activos/registrados</span>
+            </div>
+            <form method="post" action="{{ url_for('admin.categories_manage') }}" style="display: grid; grid-template-columns: 1fr 110px 1fr auto; gap: 0.6rem; align-items: end; margin-bottom: 1.25rem;">
+                <input type="hidden" name="action" value="coupon_save">
+                <label style="display: grid; gap: 0.25rem; font-size: 0.8rem;">
+                    <span>Código <span class="required-asterisk">*</span></span>
+                    <input type="text" name="codigo" placeholder="Ej. AUDIO20" maxlength="25" required style="text-transform: uppercase;">
+                </label>
+                <label style="display: grid; gap: 0.25rem; font-size: 0.8rem;">
+                    <span>Dto. (%) <span class="required-asterisk">*</span></span>
+                    <input type="number" name="porcentaje_descuento" min="1" max="90" step="1" value="15" required>
+                </label>
+                <label style="display: grid; gap: 0.25rem; font-size: 0.8rem;">
+                    <span>Categoría aplicable</span>
+                    <select name="id_main_cat">
+                        <option value="all">Toda la tienda</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id_main_cat }}">{{ cat.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <button type="submit" class="button button-sm" style="min-height: 2.6rem;">+ Guardar Cupón</button>
+            </form>
+
+            {% if coupons is defined and coupons %}
+            <div class="admin-table-wrapper">
+                <table class="admin-table" style="min-width: 440px;">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Descuento</th>
+                            <th>Alcance / Categoría</th>
+                            <th>Estado</th>
+                            <th style="text-align: right;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cup in coupons %}
+                        <tr>
+                            <td><strong>{{ cup.codigo }}</strong></td>
+                            <td><span class="badge badge-warning">{{ cup.porcentaje_descuento|int }}% Dto.</span></td>
+                            <td>{{ cup.categoria_nombre or 'Toda la tienda' }}</td>
+                            <td>
+                                {% if cup.activo %}
+                                    <span class="badge badge-success">Activo</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right;">
+                                <form method="post" action="{{ url_for('admin.categories_manage') }}" style="display:inline;">
+                                    <input type="hidden" name="action" value="coupon_toggle">
+                                    <input type="hidden" name="coupon_id" value="{{ cup.id }}">
+                                    <button type="submit" class="button-action">{% if cup.activo %}Desactivar{% else %}Activar{% endif %}</button>
+                                </form>
+                                <form method="post" action="{{ url_for('admin.categories_manage') }}" style="display:inline;">
+                                    <input type="hidden" name="action" value="coupon_delete">
+                                    <input type="hidden" name="coupon_id" value="{{ cup.id }}">
+                                    <button type="submit" class="button-action button-danger">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="muted small">Aún no hay cupones registrados.</p>
+            {% endif %}
         </div>
     </div>
 </div>

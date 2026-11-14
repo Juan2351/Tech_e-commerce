@@ -409,6 +409,77 @@ class CartOrderTests(unittest.TestCase):
             ).fetchone()
             self.assertEqual(cancelled_order["status"], "cancelled")
 
+    def test_category_price_adjustment_and_coupons_by_category(self):
+        from models import catalog
+
+        with self.app.app_context():
+            catalog.save_product({
+                "id_producto": "LAP-CAT-100",
+                "nombre": "Laptop Pro 14",
+                "descripcion": "Equipo de prueba",
+                "precio": 100.00,
+                "stock": 10,
+                "rating": 4.8,
+                "reviews_count": 12,
+                "marca": "Lenovo",
+                "id_main_cat": 4,
+                "id_subcat": 7,  # subcat 7 pertenece a id_main_cat = 4 (Laptops & Notebooks)
+            })
+
+        with self.client.session_transaction() as sess:
+            sess["user"] = {
+                "id": 1,
+                "nombre": "Admin Test",
+                "email": "admin@lepetit.com",
+                "role": "admin",
+                "rol": "admin",
+            }
+
+        # 1. Aplicar descuento masivo de -20% a la categoría 4 (100.00 -> 80.00)
+        adj_resp = self.client.post(
+            "/admin/categorias",
+            data={"action": "adjust_prices", "id_main_cat": "4", "percent_change": "-20"},
+            follow_redirects=True,
+        )
+        self.assertEqual(adj_resp.status_code, 200)
+        with self.app.app_context():
+            updated_prod = catalog.fetch_product("LAP-CAT-100")
+            self.assertEqual(updated_prod.precio, Decimal("80.00"))
+
+        # 2. Crear un cupón del 15% para la categoría 4 (LAPTOPS15)
+        cup_resp = self.client.post(
+            "/admin/categorias",
+            data={
+                "action": "coupon_save",
+                "codigo": "PROMOLAP15",
+                "porcentaje_descuento": "15",
+                "id_main_cat": "4",
+            },
+            follow_redirects=True,
+        )
+        self.assertEqual(cup_resp.status_code, 200)
+        self.assertIn(b"PROMOLAP15", cup_resp.data)
+
+        # 3. Redimir el cupón en el carrito (self.product tiene id_main_cat=4)
+        with self.client.session_transaction() as sess:
+            sess["user"] = {
+                "id": 2,
+                "nombre": "Cliente Normal",
+                "email": "cliente@lepetit.com",
+                "role": "cliente",
+                "rol": "cliente",
+            }
+            sess["cart"] = {"LAP-ORDER-001": 1}
+
+        apply_resp = self.client.post(
+            "/carrito/cupon",
+            data={"codigo": "PROMOLAP15"},
+            follow_redirects=True,
+        )
+        self.assertEqual(apply_resp.status_code, 200)
+        self.assertIn(b"PROMOLAP15", apply_resp.data)
+        self.assertIn(b"15% dcto.", apply_resp.data)
+
 
 if __name__ == "__main__":
     unittest.main()

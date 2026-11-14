@@ -71,16 +71,53 @@ def cart_summary(cart):
     return items, total
 
 
-def calculate_cart_totals(subtotal: Decimal, user=None):
+def calculate_cart_totals(subtotal: Decimal, user=None, items=None, coupon=None):
     subtotal_dec = Decimal(str(subtotal))
     discount_rate = get_vip_discount_rate(user)
-    discount_amount = subtotal_dec * discount_rate
-    final_total = subtotal_dec - discount_amount
+    vip_discount_amount = subtotal_dec * discount_rate
+
+    coupon_discount_amount = Decimal("0.00")
+    coupon_percent = 0
+    coupon_code = ""
+    coupon_category_name = None
+
+    if isinstance(coupon, dict) and coupon.get("activo", 1):
+        try:
+            pct = Decimal(str(coupon.get("porcentaje_descuento", 0)))
+        except Exception:
+            pct = Decimal("0")
+        if pct > Decimal("0"):
+            target_cat = coupon.get("id_main_cat")
+            if target_cat not in (None, "", 0, "0") and items is not None:
+                eligible_subtotal = sum(
+                    (
+                        Decimal(str(item["subtotal"]))
+                        for item in items
+                        if str(getattr(item.get("product"), "id_main_cat", "")) == str(target_cat)
+                    ),
+                    Decimal("0.00"),
+                )
+            else:
+                eligible_subtotal = subtotal_dec
+
+            if eligible_subtotal > Decimal("0.00"):
+                coupon_discount_amount = eligible_subtotal * (pct / Decimal("100"))
+                coupon_percent = int(pct)
+                coupon_code = str(coupon.get("codigo", "")).upper()
+                coupon_category_name = coupon.get("categoria_nombre")
+
+    total_discount = min(subtotal_dec, vip_discount_amount + coupon_discount_amount)
+    final_total = max(Decimal("0.00"), subtotal_dec - total_discount)
     return {
         "subtotal": subtotal_dec,
         "discount_rate": discount_rate,
         "discount_percent": int(discount_rate * 100),
-        "discount_amount": discount_amount,
+        "vip_discount_amount": vip_discount_amount,
+        "coupon_code": coupon_code,
+        "coupon_percent": coupon_percent,
+        "coupon_discount_amount": coupon_discount_amount,
+        "coupon_category_name": coupon_category_name,
+        "discount_amount": total_discount,
         "total": final_total,
         "is_vip": discount_rate > Decimal("0.00"),
     }

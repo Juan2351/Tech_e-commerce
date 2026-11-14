@@ -467,3 +467,141 @@ def update_order_status(order_id: int, new_status: str) -> Dict[str, Any]:
         "previous_status": previous_status,
         "status": new_status,
     }
+
+
+def apply_category_price_adjustment(
+    category_id: Optional[int], percent_change: float
+) -> int:
+    """
+    Aplica un descuento (porcentaje negativo, ej. -15) o incremento (positivo, ej. +10)
+    a todos los productos de una categoría principal o de todo el catálogo (si category_id es None).
+    Retorna el número de productos actualizados.
+    """
+    pct = float(percent_change)
+    if pct <= -95 or pct > 200 or pct == 0:
+        raise ValueError(
+            "El porcentaje de ajuste debe estar entre -90% y +200% y ser distinto de 0."
+        )
+
+    factor = 1.0 + (pct / 100.0)
+    connection = get_db()
+    if category_id is not None:
+        cursor = connection.execute(
+            """
+            UPDATE producto
+            SET precio = MAX(0.01, ROUND(precio * ?, 2))
+            WHERE id_subcat IN (
+                SELECT id_subcat FROM subcategoria WHERE id_main_cat = ?
+            )
+            """,
+            (factor, int(category_id)),
+        )
+    else:
+        cursor = connection.execute(
+            """
+            UPDATE producto
+            SET precio = MAX(0.01, ROUND(precio * ?, 2))
+            """,
+            (factor,),
+        )
+    connection.commit()
+    return int(cursor.rowcount or 0)
+
+
+def fetch_coupons() -> List[Dict[str, Any]]:
+    """Retorna todos los cupones registrados junto con el nombre de su categoría si aplica."""
+    rows = query_all(
+        """
+        SELECT
+            cp.id, cp.codigo, cp.porcentaje_descuento, cp.id_main_cat,
+            cp.activo, cp.created_at,
+            cat.nombre AS categoria_nombre
+        FROM cupones AS cp
+        LEFT JOIN categoria_principal AS cat ON cat.id_main_cat = cp.id_main_cat
+        ORDER BY cp.created_at DESC, cp.id DESC
+        """
+    )
+    return [dict(row) for row in rows]
+
+
+def get_coupon_by_code(codigo: str) -> Optional[Dict[str, Any]]:
+    """Busca un cupón activo por su código (insensible a mayúsculas/minúsculas)."""
+    clean_code = (codigo or "").strip().upper()
+    if not clean_code:
+        return None
+    row = query_one(
+        """
+        SELECT
+            cp.id, cp.codigo, cp.porcentaje_descuento, cp.id_main_cat,
+            cp.activo, cp.created_at,
+            cat.nombre AS categoria_nombre
+        FROM cupones AS cp
+        LEFT JOIN categoria_principal AS cat ON cat.id_main_cat = cp.id_main_cat
+        WHERE upper(cp.codigo) = ? AND cp.activo = 1
+        """,
+        (clean_code,),
+    )
+    return dict(row) if row else None
+
+
+def save_coupon(
+    codigo: str,
+    porcentaje_descuento: float,
+    id_main_cat: Optional[int] = None,
+    activo: bool = True,
+) -> Dict[str, Any]:
+    """Crea o actualiza un cupón promocional general o por categoría."""
+    clean_code = (codigo or "").strip().upper()
+    if len(clean_code) < 3 or " " in clean_code:
+        raise ValueError(
+            "El código del cupón debe tener al menos 3 caracteres y no contener espacios."
+        )
+    pct = float(porcentaje_descuento)
+    if pct <= 0 or pct > 90:
+        raise ValueError("El porcentaje de descuento debe estar entre 1% y 90%.")
+
+    cat_val = int(id_main_cat) if id_main_cat not in (None, "", 0, "0") else None
+    activo_val = 1 if activo else 0
+
+    connection = get_db()
+    connection.execute(
+        """
+        INSERT INTO cupones (codigo, porcentaje_descuento, id_main_cat, activo)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(codigo) DO UPDATE SET
+            porcentaje_descuento = excluded.porcentaje_descuento,
+            id_main_cat = excluded.id_main_cat,
+            activo = excluded.activo
+        """,
+        (clean_code, pct, cat_val, activo_val),
+    )
+    connection.commit()
+    return get_coupon_by_code(clean_code) or {
+        "codigo": clean_code,
+        "porcentaje_descuento": pct,
+        "id_main_cat": cat_val,
+        "activo": activo_val,
+    }
+
+
+def toggle_coupon(coupon_id: int) -> bool:
+    """Alterna el estado activo/inactivo de un cupón."""
+    connection = get_db()
+    connection.execute(
+        """
+        UPDATE cupones
+        SET activo = CASE WHEN activo = 1 THEN 0 ELSE 1 END
+        WHERE id = ?
+        """,
+        (int(coupon_id),),
+    )
+    connection.commit()
+    return True
+
+
+def delete_coupon(coupon_id: int) -> bool:
+    """Elimina un cupón por su ID."""
+    connection = get_db()
+    connection.execute("DELETE FROM cupones WHERE id = ?", (int(coupon_id),))
+    connection.commit()
+    return True
