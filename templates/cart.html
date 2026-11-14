@@ -47,18 +47,22 @@
             <div class="checkout-fields">
                 <label for="checkout-name">Nombre completo
                     <input id="checkout-name" name="nombre" type="text" maxlength="100"
+                           value="{{ checkout_defaults.nombre if checkout_defaults else '' }}"
                            autocomplete="name" required>
                 </label>
                 <label for="checkout-phone">WhatsApp
                     <input id="checkout-phone" name="telefono" type="tel" maxlength="24"
+                           value="{{ checkout_defaults.telefono if checkout_defaults else '' }}"
                            autocomplete="tel" placeholder="+57 300 000 0000" required>
                 </label>
                 <label for="checkout-email">Correo electrónico <span>(opcional)</span>
                     <input id="checkout-email" name="correo" type="email" maxlength="254"
+                           value="{{ checkout_defaults.correo if checkout_defaults else '' }}"
                            autocomplete="email">
                 </label>
                 <label for="checkout-address">Dirección o lugar de entrega <span>(opcional)</span>
                     <input id="checkout-address" name="direccion" type="text" maxlength="250"
+                           value="{{ checkout_defaults.direccion if checkout_defaults else '' }}"
                            autocomplete="street-address">
                 </label>
                 <label class="checkout-notes-field" for="checkout-notes">Notas del pedido <span>(opcional)</span>

@@ -161,6 +161,34 @@ class CartOrderTests(unittest.TestCase):
         self.assertIn(b"Beneficio VIP (10% dcto.)", response.data)
         self.assertIn(b"$ 75.600 COP", response.data)
 
+    def test_cart_page_prefills_checkout_fields_for_authenticated_user(self):
+        from models.auth_model import register_user
+        with self.app.app_context():
+            user = register_user(
+                nombre="Carlos Cliente",
+                email="carlos@example.com",
+                password="password123",
+                telefono="+57 315 222 3344",
+                direccion_entrega="Cra 7 # 15-20, Pereira",
+                role="cliente",
+            )
+
+        with self.client.session_transaction() as current_session:
+            current_session["cart"] = {"LAP-ORDER-001": 1}
+            current_session["user"] = {
+                "id": user["id"],
+                "nombre": user["nombre_usuario"],
+                "email": user["email"],
+                "role": user["rol"],
+            }
+
+        response = self.client.get("/carrito")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'value="Carlos Cliente"', response.data)
+        self.assertIn(b'value="+57 315 222 3344"', response.data)
+        self.assertIn(b'value="carlos@example.com"', response.data)
+        self.assertIn(b'value="Cra 7 # 15-20, Pereira"', response.data)
+
     def test_checkout_rejects_missing_or_invalid_form_token(self):
         response = self.client.post("/pedidos", data={
             "checkout_token": "forged-token",

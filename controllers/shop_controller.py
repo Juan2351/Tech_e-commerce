@@ -18,7 +18,7 @@ from flask import (
 )
 
 from models import catalog
-from models.auth_model import get_vip_discount_rate
+from models.auth_model import get_user_by_id, get_vip_discount_rate
 from models.database import get_db
 from services.cart_service import calculate_cart_totals, cart_summary
 
@@ -136,11 +136,34 @@ def cart():
     cart_data = session.get("cart", {})
     if not isinstance(cart_data, dict):
         cart_data = {}
+    user_session = session.get("user")
     items, subtotal = cart_summary(cart_data)
-    pricing = calculate_cart_totals(subtotal, session.get("user"))
+    pricing = calculate_cart_totals(subtotal, user_session)
     session["cart"] = cart_data
     if items and not session.get("checkout_token"):
         session["checkout_token"] = secrets.token_urlsafe(32)
+
+    checkout_defaults = {
+        "nombre": "",
+        "telefono": "",
+        "correo": "",
+        "direccion": "",
+    }
+    if isinstance(user_session, dict):
+        db_user = None
+        if user_session.get("id") is not None:
+            try:
+                db_user = get_user_by_id(user_session["id"])
+            except Exception:
+                db_user = None
+        source = db_user or user_session
+        checkout_defaults = {
+            "nombre": source.get("nombre_usuario") or source.get("nombre") or "",
+            "telefono": source.get("telefono") or "",
+            "correo": source.get("email") or "",
+            "direccion": source.get("direccion_entrega") or source.get("ciudad") or "",
+        }
+
     return render_template(
         "cart.html",
         items=items,
@@ -149,6 +172,7 @@ def cart():
         discount_percent=pricing["discount_percent"],
         is_vip=pricing["is_vip"],
         total=pricing["total"],
+        checkout_defaults=checkout_defaults,
         cart_count=cart_count(cart_data),
         checkout_token=session.get("checkout_token", ""),
     )
