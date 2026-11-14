@@ -10,7 +10,7 @@ def init_admin_dash(server):
         server=server,
         url_base_pathname="/admin/analytics/",
         title="Analítica Integral | LePetit Admin",
-        external_stylesheets=["/static/css/styles.css"],
+        external_stylesheets=["/static/css/styles.css", "/static/css/admin.css"],
     )
     dash_app.layout = html.Main(
         [
