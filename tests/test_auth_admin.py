@@ -20,12 +20,17 @@ class AuthAndAdminTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Iniciar", response.data)
         self.assertIn(b"correo", response.data)
+        self.assertIn(b'class="required-asterisk"', response.data)
+        self.assertIn(b'data-password-toggle="password"', response.data)
 
     def test_register_page_renders_form(self):
         response = self.client.get("/registro")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Crear", response.data)
         self.assertIn(b"Registrarme", response.data)
+        self.assertIn(b'class="required-asterisk"', response.data)
+        self.assertIn(b'data-password-toggle="password"', response.data)
+        self.assertIn(b'data-password-toggle="confirm_password"', response.data)
 
     def test_admin_dashboard_requires_login(self):
         response = self.client.get("/admin/dashboard", follow_redirects=False)

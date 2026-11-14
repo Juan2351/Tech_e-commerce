@@ -314,6 +314,22 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 document.addEventListener("click", async (event) => {
+    const passwordToggle = event.target.closest("[data-password-toggle]");
+    if (passwordToggle) {
+        const targetId = passwordToggle.dataset.passwordToggle;
+        const input = document.getElementById(targetId) || passwordToggle.parentElement?.querySelector("input");
+        if (input) {
+            const isHidden = input.type === "password";
+            input.type = isHidden ? "text" : "password";
+            passwordToggle.setAttribute("aria-pressed", String(isHidden));
+            const eye = passwordToggle.querySelector(".icon-eye");
+            const eyeOff = passwordToggle.querySelector(".icon-eye-off");
+            if (eye) eye.hidden = isHidden;
+            if (eyeOff) eyeOff.hidden = !isHidden;
+        }
+        return;
+    }
+
     const product3dButton = event.target.closest("[data-product-3d-toggle]");
     if (product3dButton) {
         await toggleProduct3d(product3dButton);

@@ -45,27 +45,27 @@
                 <p>Crearemos tu número de pedido y te contactaremos para confirmar disponibilidad y entrega.</p>
             </div>
             <div class="checkout-fields">
-                <label for="checkout-name">Nombre completo
+                <label for="checkout-name"><span>Nombre completo <span class="required-asterisk" aria-hidden="true">*</span></span>
                     <input id="checkout-name" name="nombre" type="text" maxlength="100"
                            value="{{ checkout_defaults.nombre if checkout_defaults else '' }}"
                            autocomplete="name" required>
                 </label>
-                <label for="checkout-phone">WhatsApp
+                <label for="checkout-phone"><span>WhatsApp <span class="required-asterisk" aria-hidden="true">*</span></span>
                     <input id="checkout-phone" name="telefono" type="tel" maxlength="24"
                            value="{{ checkout_defaults.telefono if checkout_defaults else '' }}"
                            autocomplete="tel" placeholder="+57 300 000 0000" required>
                 </label>
-                <label for="checkout-email">Correo electrónico <span>(opcional)</span>
+                <label for="checkout-email"><span>Correo electrónico <span class="optional-hint">(opcional)</span></span>
                     <input id="checkout-email" name="correo" type="email" maxlength="254"
                            value="{{ checkout_defaults.correo if checkout_defaults else '' }}"
                            autocomplete="email">
                 </label>
-                <label for="checkout-address">Dirección o lugar de entrega <span>(opcional)</span>
+                <label for="checkout-address"><span>Dirección o lugar de entrega <span class="optional-hint">(opcional)</span></span>
                     <input id="checkout-address" name="direccion" type="text" maxlength="250"
                            value="{{ checkout_defaults.direccion if checkout_defaults else '' }}"
                            autocomplete="street-address">
                 </label>
-                <label class="checkout-notes-field" for="checkout-notes">Notas del pedido <span>(opcional)</span>
+                <label class="checkout-notes-field" for="checkout-notes"><span>Notas del pedido <span class="optional-hint">(opcional)</span></span>
                     <textarea id="checkout-notes" name="notas" maxlength="500" rows="3"
                               placeholder="Indicaciones para contactarte o entregar el pedido"></textarea>
                 </label>
