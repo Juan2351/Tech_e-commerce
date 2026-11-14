@@ -41,6 +41,22 @@ class CatalogDashboardTests(unittest.TestCase):
         })
         self.assertEqual(query_one.call_count, 2)
 
+    def test_admin_analytics_layout_includes_exit_navigation_and_multi_category_charts(self):
+        from app import create_app
+
+        app = create_app({"TESTING": True, "SECRET_KEY": "test-secret"})
+        dash_app = app.extensions["admin_dash"]
+        layout_repr = repr(dash_app.layout)
+        self.assertIn("Volver al Panel Admin", layout_repr)
+        self.assertIn("/admin/dashboard", layout_repr)
+        self.assertIn("Salir a la Tienda", layout_repr)
+        self.assertIn("admin-analytics-categories-chart", layout_repr)
+        self.assertIn("admin-analytics-value-chart", layout_repr)
+        self.assertIn("admin-analytics-low-stock-chart", layout_repr)
+        self.assertIn("admin-analytics-clients-chart", layout_repr)
+        self.assertIn("admin-analytics-orders-chart", layout_repr)
+        self.assertIn("admin-analytics-categories-table", layout_repr)
+
 
 if __name__ == "__main__":
     unittest.main()

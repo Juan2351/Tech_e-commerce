@@ -605,3 +605,94 @@ def delete_coupon(coupon_id: int) -> bool:
     connection.execute("DELETE FROM cupones WHERE id = ?", (int(coupon_id),))
     connection.commit()
     return True
+
+
+def fetch_analytics_breakdown(category_id: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Obtiene el desglose analítico completo para /admin/analytics/:
+    - Distribución de productos, stock, valorización (USD) y alertas de bajo stock por categoría principal.
+    - Distribución de usuarios por rol (cliente, vip, admin).
+    - Resumen de pedidos por estado e ingresos en COP.
+    - Productos con bajo stock (< 15 unidades) filtrables por categoría.
+    """
+    categories_rows = query_all(
+        """
+        SELECT
+            c.id_main_cat,
+            c.nombre AS categoria,
+            COUNT(p.id_producto) AS total_products,
+            COALESCE(SUM(p.stock), 0) AS total_stock,
+            ROUND(COALESCE(SUM(p.precio * p.stock), 0), 2) AS total_value_usd,
+            ROUND(COALESCE(AVG(p.rating), 0), 2) AS avg_rating,
+            COALESCE(SUM(CASE WHEN p.stock < 15 THEN 1 ELSE 0 END), 0) AS low_stock_count
+        FROM categoria_principal AS c
+        LEFT JOIN subcategoria AS s ON s.id_main_cat = c.id_main_cat
+        LEFT JOIN producto AS p ON p.id_subcat = s.id_subcat
+        GROUP BY c.id_main_cat, c.nombre
+        ORDER BY total_stock DESC, c.nombre ASC
+        """
+    )
+    categories_summary = [dict(r) for r in categories_rows]
+
+    low_stock_sql = PRODUCT_SELECT + " WHERE p.stock < 15"
+    low_stock_params: tuple = ()
+    if category_id is not None:
+        low_stock_sql += " AND c.id_main_cat = ?"
+        low_stock_params = (int(category_id),)
+    low_stock_sql += " ORDER BY p.stock ASC, p.reviews_count DESC LIMIT 10"
+    low_stock_rows = query_all(low_stock_sql, low_stock_params)
+    low_stock_products = [Product.from_row(r) for r in low_stock_rows]
+
+    top_sql = PRODUCT_SELECT
+    top_params: tuple = (8,)
+    if category_id is not None:
+        top_sql += " WHERE c.id_main_cat = ?"
+        top_params = (int(category_id), 8)
+    top_sql += " ORDER BY p.rating DESC, p.reviews_count DESC LIMIT ?"
+    top_rows = query_all(top_sql, top_params)
+    top_products = [Product.from_row(r) for r in top_rows]
+
+    roles_summary = {"cliente": 0, "vip": 0, "admin": 0}
+    orders_summary = {
+        "pending_confirmation": 0,
+        "confirmed": 0,
+        "cancelled": 0,
+        "total_orders": 0,
+        "confirmed_revenue_cop": 0,
+    }
+
+    if has_app_context():
+        db = get_db()
+        try:
+            for row in db.execute(
+                "SELECT rol, COUNT(*) AS total FROM usuarios GROUP BY rol"
+            ):
+                r_name = (row["rol"] or "cliente").lower()
+                roles_summary[r_name] = int(row["total"])
+        except Exception:
+            pass
+
+        try:
+            for row in db.execute(
+                """
+                SELECT status, COUNT(*) AS total, COALESCE(SUM(total_cop), 0) AS sum_cop
+                FROM orders
+                GROUP BY status
+                """
+            ):
+                st = row["status"]
+                cnt = int(row["total"])
+                orders_summary[st] = cnt
+                orders_summary["total_orders"] += cnt
+                if st == "confirmed":
+                    orders_summary["confirmed_revenue_cop"] = int(row["sum_cop"])
+        except Exception:
+            pass
+
+    return {
+        "categories_summary": categories_summary,
+        "low_stock_products": low_stock_products,
+        "top_products": top_products,
+        "roles_summary": roles_summary,
+        "orders_summary": orders_summary,
+    }
