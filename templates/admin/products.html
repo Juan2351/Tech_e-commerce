@@ -6,7 +6,7 @@
     <div class="admin-page-header">
         <div>
             <h1>Inventario de Productos</h1>
-            <p class="muted">Gestión de catálogo en Firebase Realtime Database ({{ total_products }} productos).</p>
+            <p class="muted">Gestión del catálogo activo en SQLite ({{ total_products }} productos).</p>
         </div>
         <div>
             <a class="button" href="{{ url_for('admin.product_create') }}">+ Agregar Producto</a>
@@ -68,7 +68,7 @@
                     <td class="table-actions-cell">
                         <a class="button-action" href="{{ url_for('admin.product_edit', product_id=product.id_producto) }}">Editar</a>
                         <form method="post" action="{{ url_for('admin.product_delete', product_id=product.id_producto) }}"
-                              onsubmit="return confirm('¿Confirmas la eliminación permanente de este producto en Firebase?');" style="display:inline;">
+                              onsubmit="return confirm('¿Confirmas la eliminación permanente de este producto?');" style="display:inline;">
                             <button type="submit" class="button-action button-danger">Eliminar</button>
                         </form>
                     </td>

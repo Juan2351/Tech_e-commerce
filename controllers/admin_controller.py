@@ -122,7 +122,7 @@ def product_create():
                     "url": url,
                 }
                 catalog.save_product(product_data)
-                flash(f"Producto '{nombre}' creado exitosamente en Firebase.", "success")
+                flash(f"Producto '{nombre}' creado exitosamente en la base de datos.", "success")
                 return redirect(url_for("admin.products_list"))
             except Exception as err:
                 error = f"Error al guardar producto: {err}"
@@ -193,7 +193,7 @@ def product_edit(product_id):
                     "url": url,
                 }
                 catalog.save_product(product_data)
-                flash(f"Producto '{nombre}' actualizado exitosamente en Firebase.", "success")
+                flash(f"Producto '{nombre}' actualizado exitosamente en la base de datos.", "success")
                 return redirect(url_for("admin.products_list"))
             except Exception as err:
                 error = f"Error al actualizar producto: {err}"
@@ -213,7 +213,7 @@ def product_edit(product_id):
 def product_delete(product_id):
     try:
         catalog.delete_product(product_id)
-        flash(f"Producto con ID {product_id} eliminado exitosamente de Firebase.", "success")
+        flash(f"Producto con ID {product_id} eliminado exitosamente.", "success")
     except Exception as err:
         flash(f"Error al eliminar producto: {err}", "error")
     return redirect(url_for("admin.products_list"))
