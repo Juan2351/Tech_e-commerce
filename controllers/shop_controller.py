@@ -21,7 +21,12 @@ from controllers.auth_controller import login_required
 from models import catalog
 from models.auth_model import get_user_by_id, get_vip_discount_rate
 from models.database import get_db
-from services.cart_service import calculate_cart_totals, cart_summary
+from services.cart_service import (
+    calculate_cart_totals,
+    cart_summary,
+    get_session_cart,
+    save_session_cart,
+)
 
 shop = Blueprint("shop", __name__)
 PRODUCTS_PER_PAGE = 24
@@ -72,7 +77,7 @@ def home():
         "index.html",
         categories=categories,
         top_products=top_products,
-        cart_count=cart_count(session.get("cart", {})),
+        cart_count=cart_count(get_session_cart(session)),
     )
 
 
@@ -109,7 +114,7 @@ def shop_view():
         sort=sort,
         page=page,
         total_pages=total_pages,
-        cart_count=cart_count(session.get("cart", {})),
+        cart_count=cart_count(get_session_cart(session)),
     )
 
 
@@ -128,19 +133,17 @@ def product_detail(product_id):
     return render_template(
         "product_detail.html",
         product=product,
-        cart_count=cart_count(session.get("cart", {})),
+        cart_count=cart_count(get_session_cart(session)),
     )
 
 
 @shop.get("/carrito")
 def cart():
-    cart_data = session.get("cart", {})
-    if not isinstance(cart_data, dict):
-        cart_data = {}
+    cart_data = get_session_cart(session)
     user_session = session.get("user")
     items, subtotal = cart_summary(cart_data)
     pricing = calculate_cart_totals(subtotal, user_session)
-    session["cart"] = cart_data
+    save_session_cart(session, cart_data)
     if items and not session.get("checkout_token"):
         session["checkout_token"] = secrets.token_urlsafe(32)
 
@@ -216,11 +219,9 @@ def create_order():
         flash("La dirección admite 250 caracteres y las notas 500.", "error")
         return redirect(url_for("shop.cart"))
 
-    cart_data = session.get("cart", {})
-    if not isinstance(cart_data, dict):
-        cart_data = {}
+    cart_data = get_session_cart(session)
     items, _total = cart_summary(cart_data)
-    session["cart"] = cart_data
+    save_session_cart(session, cart_data)
     if not items:
         flash("Tu carrito está vacío; agrega productos antes de crear un pedido.", "error")
         return redirect(url_for("shop.cart"))
@@ -319,7 +320,7 @@ def create_order():
         connection.rollback()
         raise
 
-    session["cart"] = {}
+    save_session_cart(session, {})
     session["last_order_number"] = order_number
     session.pop("checkout_token", None)
     return redirect(url_for("shop.order_confirmation"))
@@ -357,7 +358,7 @@ def order_confirmation():
         order=order,
         items=items,
         whatsapp_url=whatsapp_url,
-        cart_count=cart_count(session.get("cart", {})),
+        cart_count=cart_count(get_session_cart(session)),
     )
 
 
@@ -405,5 +406,5 @@ def my_orders():
     return render_template(
         "my_orders.html",
         orders=orders_data,
-        cart_count=cart_count(session.get("cart", {})),
+        cart_count=cart_count(get_session_cart(session)),
     )

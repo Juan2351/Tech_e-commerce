@@ -84,3 +84,80 @@ def calculate_cart_totals(subtotal: Decimal, user=None):
         "total": final_total,
         "is_vip": discount_rate > Decimal("0.00"),
     }
+
+
+def _owner_key(user) -> str:
+    if isinstance(user, dict) and user.get("id") is not None:
+        return f"user:{user['id']}"
+    return "__guest__"
+
+
+def get_session_cart(session_obj) -> dict:
+    """Obtiene el carrito aislado correspondiente al usuario actual en sesión."""
+    current_owner = _owner_key(session_obj.get("user"))
+    recorded_owner = session_obj.get("_cart_owner")
+    user_carts = session_obj.get("user_carts")
+    if not isinstance(user_carts, dict):
+        user_carts = {}
+
+    raw_cart = session_obj.get("cart")
+    if not isinstance(raw_cart, dict):
+        raw_cart = {}
+
+    if recorded_owner is None:
+        # Primera vez o test que inyectó session["cart"] directamente
+        session_obj["_cart_owner"] = current_owner
+        user_carts[current_owner] = dict(raw_cart)
+        session_obj["user_carts"] = user_carts
+        return raw_cart
+
+    if recorded_owner != current_owner:
+        # Cambió el usuario sin pasar por switch_cart_owner: guardar el anterior y cargar el nuevo
+        user_carts[recorded_owner] = dict(raw_cart)
+        new_cart = dict(user_carts.get(current_owner, {}))
+        session_obj["cart"] = new_cart
+        session_obj["_cart_owner"] = current_owner
+        session_obj["user_carts"] = user_carts
+        return new_cart
+
+    user_carts[current_owner] = dict(raw_cart)
+    session_obj["user_carts"] = user_carts
+    return raw_cart
+
+
+def save_session_cart(session_obj, cart: dict) -> None:
+    """Guarda el carrito activo sincronizándolo con el espacio aislado del usuario actual."""
+    clean_cart = dict(cart) if isinstance(cart, dict) else {}
+    current_owner = _owner_key(session_obj.get("user"))
+    user_carts = session_obj.get("user_carts")
+    if not isinstance(user_carts, dict):
+        user_carts = {}
+    user_carts[current_owner] = dict(clean_cart)
+    session_obj["user_carts"] = user_carts
+    session_obj["_cart_owner"] = current_owner
+    session_obj["cart"] = clean_cart
+
+
+def switch_cart_owner(session_obj, new_user=None) -> None:
+    """Guarda el carrito del usuario saliente y activa el carrito aislado del usuario entrante."""
+    previous_owner = session_obj.get("_cart_owner") or _owner_key(session_obj.get("user"))
+    user_carts = session_obj.get("user_carts")
+    if not isinstance(user_carts, dict):
+        user_carts = {}
+
+    current_cart = session_obj.get("cart")
+    if isinstance(current_cart, dict):
+        user_carts[previous_owner] = dict(current_cart)
+
+    new_owner = _owner_key(new_user)
+    if new_owner == "__guest__":
+        # Al cerrar sesión, el carrito de invitado arranca vacío para no exponer productos previos
+        user_carts["__guest__"] = {}
+        next_cart = {}
+    else:
+        next_cart = dict(user_carts.get(new_owner, {}))
+
+    session_obj["user_carts"] = user_carts
+    session_obj["_cart_owner"] = new_owner
+    session_obj["cart"] = next_cart
+    session_obj.pop("checkout_token", None)

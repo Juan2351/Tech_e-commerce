@@ -234,6 +234,62 @@ class CartOrderTests(unittest.TestCase):
         self.assertIn(b"Confirmado", response.data)
         self.assertNotIn(b"LP-20261114-BBBB2222", response.data)
 
+    def test_cart_is_isolated_between_different_authenticated_users(self):
+        from models.auth_model import register_user
+        with self.app.app_context():
+            vip_user = register_user(
+                nombre="VIP User",
+                email="vip_cart@example.com",
+                password="password123",
+                role="vip",
+            )
+            normal_user = register_user(
+                nombre="Normal User",
+                email="normal_cart@example.com",
+                password="password123",
+                role="cliente",
+            )
+
+        with patch("services.cart_service.fetch_product", return_value=self.product):
+            # 1. Inicia sesión como VIP y agrega un portátil (cantidad 2)
+            self.client.post("/login", data={
+                "email": "vip_cart@example.com",
+                "password": "password123",
+            })
+            add_vip = self.client.post(
+                "/api/v1/carrito/productos",
+                json={"product_id": "LAP-ORDER-001", "quantity": 2},
+            )
+            self.assertEqual(add_vip.status_code, 201)
+
+            # 2. Cierra sesión e inicia sesión como cliente normal
+            self.client.get("/logout")
+            self.client.post("/login", data={
+                "email": "normal_cart@example.com",
+                "password": "password123",
+            })
+            with self.client.session_transaction() as sess:
+                self.assertEqual(sess.get("cart"), {})
+
+            # 3. El cliente normal agrega 1 unidad y luego la elimina de su carrito
+            self.client.post(
+                "/api/v1/carrito/productos",
+                json={"product_id": "LAP-ORDER-001", "quantity": 1},
+            )
+            delete_normal = self.client.delete("/api/v1/carrito/productos/LAP-ORDER-001")
+            self.assertEqual(delete_normal.status_code, 204)
+            with self.client.session_transaction() as sess:
+                self.assertEqual(sess.get("cart"), {})
+
+            # 4. Cierra sesión el cliente normal y vuelve a entrar el VIP: su carrito sigue intacto
+            self.client.get("/logout")
+            self.client.post("/login", data={
+                "email": "vip_cart@example.com",
+                "password": "password123",
+            })
+            with self.client.session_transaction() as sess:
+                self.assertEqual(sess.get("cart"), {"LAP-ORDER-001": 2})
+
     def test_checkout_rejects_missing_or_invalid_form_token(self):
         response = self.client.post("/pedidos", data={
             "checkout_token": "forged-token",

@@ -173,10 +173,10 @@ def list_categories():
 
 @api.get("/carrito")
 def get_cart():
-    cart = session.get("cart", {})
+    cart = cart_service.get_session_cart(session)
     items, subtotal = cart_service.cart_summary(cart)
     pricing = cart_service.calculate_cart_totals(subtotal, session.get("user"))
-    session["cart"] = cart
+    cart_service.save_session_cart(session, cart)
     rate = current_rate()
     subtotal_cop = int(
         (pricing["subtotal"] * rate).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
@@ -219,9 +219,7 @@ def add_cart_product():
         return error_response("invalid_body", "El cuerpo debe ser un objeto JSON.", 400)
     product_id = payload.get("product_id")
     quantity = payload.get("quantity")
-    cart = session.get("cart", {})
-    if not isinstance(cart, dict):
-        cart = {}
+    cart = cart_service.get_session_cart(session)
     try:
         product, cart_quantity = cart_service.add_product(cart, product_id, quantity)
     except cart_service.CartProductNotFound as error:
@@ -231,7 +229,7 @@ def add_cart_product():
     except cart_service.CartError as error:
         return error_response("invalid_body", str(error), 400)
 
-    session["cart"] = cart
+    cart_service.save_session_cart(session, cart)
     return jsonify({
         "data": {
             "product_id": product.id_producto,
@@ -251,9 +249,7 @@ def change_cart_product(product_id):
         return error_response(
             "invalid_body", "El cuerpo debe incluir quantity como entero.", 400
         )
-    cart = session.get("cart", {})
-    if not isinstance(cart, dict):
-        cart = {}
+    cart = cart_service.get_session_cart(session)
     try:
         cart_service.update_quantity(cart, product_id, payload["quantity"])
     except cart_service.CartProductNotFound as error:
@@ -264,15 +260,15 @@ def change_cart_product(product_id):
         return error_response("insufficient_stock", str(error), 409)
     except cart_service.CartError as error:
         return error_response("invalid_body", str(error), 400)
-    session["cart"] = cart
+    cart_service.save_session_cart(session, cart)
     return jsonify({"data": {"product_id": product_id, "quantity": cart[product_id]}})
 
 
 @api.delete("/carrito/productos/<string:product_id>")
 def delete_cart_product(product_id):
-    cart = session.get("cart", {})
+    cart = cart_service.get_session_cart(session)
     if product_id not in cart:
         return error_response("not_found", "El producto no está en el carrito.", 404)
     del cart[product_id]
-    session["cart"] = cart
+    cart_service.save_session_cart(session, cart)
     return "", 204

@@ -2,6 +2,7 @@ from functools import wraps
 from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
 
 from models.auth_model import AuthError, authenticate_user, register_user
+from services.cart_service import switch_cart_owner
 
 auth = Blueprint("auth", __name__)
 
@@ -52,7 +53,7 @@ def login():
             if user:
                 rol = user.get("rol") or user.get("role", "cliente")
                 nombre = user.get("nombre_usuario") or user.get("nombre", "")
-                session["user"] = {
+                new_user_session = {
                     "id": user["id"],
                     "nombre": nombre,
                     "nombre_usuario": nombre,
@@ -60,6 +61,8 @@ def login():
                     "role": rol,
                     "rol": rol,
                 }
+                switch_cart_owner(session, new_user_session)
+                session["user"] = new_user_session
                 flash(f"¡Bienvenido de nuevo, {nombre}!", "success")
                 if next_url and next_url.startswith("/"):
                     return redirect(next_url)
@@ -100,7 +103,7 @@ def register():
                 )
                 rol = user.get("rol") or user.get("role", "cliente")
                 nombre_usuario = user.get("nombre_usuario") or user.get("nombre", nombre)
-                session["user"] = {
+                new_user_session = {
                     "id": user["id"],
                     "nombre": nombre_usuario,
                     "nombre_usuario": nombre_usuario,
@@ -108,6 +111,8 @@ def register():
                     "role": rol,
                     "rol": rol,
                 }
+                switch_cart_owner(session, new_user_session)
+                session["user"] = new_user_session
                 flash("¡Registro exitoso! Bienvenido a LePetit.", "success")
                 return redirect(url_for("shop.home"))
             except AuthError as err:
@@ -120,6 +125,7 @@ def register():
 
 @auth.route("/logout")
 def logout():
+    switch_cart_owner(session, None)
     session.pop("user", None)
     flash("Has cerrado sesión correctamente.", "info")
     return redirect(url_for("shop.home"))
