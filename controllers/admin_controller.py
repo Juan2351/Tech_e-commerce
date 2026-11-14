@@ -287,3 +287,52 @@ def categories_manage():
 def clients_list():
     users = get_all_users()
     return render_template("admin/clients.html", users=users)
+
+
+@admin.route("/pedidos")
+@admin_required
+def orders_list():
+    status_filter = request.args.get("status", "").strip()
+    if status_filter not in catalog.VALID_ORDER_STATUSES:
+        status_filter = ""
+
+    all_orders = catalog.fetch_all_orders()
+    order_counts = {
+        "all": len(all_orders),
+        "pending_confirmation": sum(1 for o in all_orders if o["status"] == "pending_confirmation"),
+        "confirmed": sum(1 for o in all_orders if o["status"] == "confirmed"),
+        "cancelled": sum(1 for o in all_orders if o["status"] == "cancelled"),
+    }
+    orders = (
+        [o for o in all_orders if o["status"] == status_filter]
+        if status_filter
+        else all_orders
+    )
+    return render_template(
+        "admin/orders.html",
+        orders=orders,
+        status_filter=status_filter,
+        order_counts=order_counts,
+    )
+
+
+@admin.route("/pedidos/<int:order_id>/estado", methods=["POST"])
+@admin_required
+def order_update_status(order_id: int):
+    new_status = request.form.get("status", "").strip()
+    try:
+        result = catalog.update_order_status(order_id, new_status)
+        status_labels = {
+            "pending_confirmation": "Pendiente de confirmación",
+            "confirmed": "Confirmado (stock actualizado)",
+            "cancelled": "Cancelado",
+        }
+        flash(
+            f"Pedido {result['order_number']} actualizado a: {status_labels.get(new_status, new_status)}.",
+            "success",
+        )
+    except ValueError as err:
+        flash(str(err), "error")
+    except Exception as err:
+        flash(f"Error al actualizar el estado del pedido: {err}", "error")
+    return redirect(url_for("admin.orders_list", status=request.args.get("status", "")))

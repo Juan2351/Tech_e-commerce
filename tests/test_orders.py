@@ -329,6 +329,86 @@ class CartOrderTests(unittest.TestCase):
         self.assertIn("orders", table_names)
         self.assertIn("order_items", table_names)
 
+    def test_admin_orders_management_and_stock_deduction(self):
+        from models import catalog
+
+        with self.app.app_context():
+            catalog.save_product({
+                "id_producto": "LAP-ORDER-001",
+                "nombre": 'Lenovo V15 Laptop 15.6"',
+                "descripcion": "Laptop de prueba",
+                "precio": 79.99,
+                "stock": 5,
+                "rating": 4.5,
+                "reviews_count": 10,
+                "marca": "Lenovo",
+                "id_main_cat": 1,
+                "id_subcat": 1,
+            })
+
+        with self.client.session_transaction() as sess:
+            sess["cart"] = {"LAP-ORDER-001": 2}
+            sess["checkout_token"] = "valid-order-token-admin"
+
+        create_resp = self.client.post("/pedidos", data={
+            "checkout_token": "valid-order-token-admin",
+            "nombre": "Cliente Pedido Admin",
+            "telefono": "+57 314 000 1111",
+            "direccion": "Calle 50 #10-20, Pereira",
+        })
+        self.assertEqual(create_resp.status_code, 302)
+
+        with self.app.app_context():
+            order_row = get_db().execute(
+                "SELECT id, status FROM orders ORDER BY id DESC LIMIT 1"
+            ).fetchone()
+            order_id = order_row["id"]
+            self.assertEqual(order_row["status"], "pending_confirmation")
+
+        # Iniciar sesión como administrador en la sesión
+        with self.client.session_transaction() as sess:
+            sess["user"] = {
+                "id": 1,
+                "nombre": "Admin Test",
+                "email": "admin@lepetit.com",
+                "role": "admin",
+                "rol": "admin",
+            }
+
+        list_resp = self.client.get("/admin/pedidos")
+        self.assertEqual(list_resp.status_code, 200)
+        self.assertIn(b"Cliente Pedido Admin", list_resp.data)
+
+        # 1. Confirmar el pedido -> debe descontar 2 unidades (de 5 a 3)
+        confirm_resp = self.client.post(
+            f"/admin/pedidos/{order_id}/estado",
+            data={"status": "confirmed"},
+            follow_redirects=True,
+        )
+        self.assertEqual(confirm_resp.status_code, 200)
+        with self.app.app_context():
+            prod_after_confirm = catalog.fetch_product("LAP-ORDER-001")
+            self.assertEqual(prod_after_confirm.stock, 3)
+            updated_order = get_db().execute(
+                "SELECT status FROM orders WHERE id = ?", (order_id,)
+            ).fetchone()
+            self.assertEqual(updated_order["status"], "confirmed")
+
+        # 2. Cancelar el pedido confirmado -> debe revertir las 2 unidades (de 3 a 5)
+        cancel_resp = self.client.post(
+            f"/admin/pedidos/{order_id}/estado",
+            data={"status": "cancelled"},
+            follow_redirects=True,
+        )
+        self.assertEqual(cancel_resp.status_code, 200)
+        with self.app.app_context():
+            prod_after_cancel = catalog.fetch_product("LAP-ORDER-001")
+            self.assertEqual(prod_after_cancel.stock, 5)
+            cancelled_order = get_db().execute(
+                "SELECT status FROM orders WHERE id = ?", (order_id,)
+            ).fetchone()
+            self.assertEqual(cancelled_order["status"], "cancelled")
+
 
 if __name__ == "__main__":
     unittest.main()

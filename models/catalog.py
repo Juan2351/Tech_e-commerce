@@ -351,3 +351,119 @@ def fetch_dashboard_stats() -> Dict[str, Any]:
         "total_value_usd": round(float(product_stats["total_value_usd"]), 2),
         "low_stock_count": product_stats["low_stock_count"],
     }
+
+
+VALID_ORDER_STATUSES = ("pending_confirmation", "confirmed", "cancelled")
+
+
+def fetch_all_orders(status_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Obtiene el listado de pedidos con sus ítems y datos del usuario."""
+    connection = get_db()
+    sql = """
+        SELECT
+            o.id, o.user_id, o.order_number, o.status, o.customer_name,
+            o.phone, o.email, o.delivery_address, o.notes,
+            o.total_cop, o.created_at,
+            u.nombre_usuario AS user_nombre, u.rol AS user_rol
+        FROM orders AS o
+        LEFT JOIN usuarios AS u ON u.id = o.user_id
+    """
+    params: tuple = ()
+    if status_filter and status_filter in VALID_ORDER_STATUSES:
+        sql += " WHERE o.status = ?"
+        params = (status_filter,)
+    sql += " ORDER BY o.created_at DESC, o.id DESC"
+
+    order_rows = connection.execute(sql, params).fetchall()
+    orders_list: List[Dict[str, Any]] = []
+    for row in order_rows:
+        order_dict = dict(row)
+        items_rows = connection.execute(
+            """
+            SELECT product_id, product_name, quantity, unit_price_cop, line_total_cop
+            FROM order_items
+            WHERE order_id = ?
+            ORDER BY id ASC
+            """,
+            (order_dict["id"],),
+        ).fetchall()
+        order_dict["lines"] = [dict(item) for item in items_rows]
+        orders_list.append(order_dict)
+    return orders_list
+
+
+def update_order_status(order_id: int, new_status: str) -> Dict[str, Any]:
+    """
+    Actualiza el estado de un pedido y ajusta atómicamente el stock en `producto`:
+    - Si pasa a 'confirmed' desde otro estado: descuenta las unidades de cada ítem.
+    - Si sale de 'confirmed' hacia 'cancelled' o 'pending_confirmation': revierte el stock.
+    """
+    if new_status not in VALID_ORDER_STATUSES:
+        raise ValueError(f"Estado de pedido inválido: {new_status}")
+
+    connection = get_db()
+    order_row = connection.execute(
+        "SELECT id, order_number, status FROM orders WHERE id = ?",
+        (int(order_id),),
+    ).fetchone()
+    if order_row is None:
+        raise ValueError("El pedido solicitado no existe.")
+
+    previous_status = order_row["status"]
+    if previous_status == new_status:
+        return dict(order_row)
+
+    items = connection.execute(
+        """
+        SELECT product_id, product_name, quantity
+        FROM order_items
+        WHERE order_id = ?
+        """,
+        (int(order_id),),
+    ).fetchall()
+
+    if previous_status != "confirmed" and new_status == "confirmed":
+        for item in items:
+            prod_row = connection.execute(
+                "SELECT stock, nombre FROM producto WHERE id_producto = ?",
+                (item["product_id"],),
+            ).fetchone()
+            if prod_row is not None:
+                available = int(prod_row["stock"])
+                needed = int(item["quantity"])
+                if available < needed:
+                    raise ValueError(
+                        f"Stock insuficiente para '{item['product_name']}' "
+                        f"(disponible: {available}, requerido: {needed})."
+                    )
+        for item in items:
+            connection.execute(
+                """
+                UPDATE producto
+                SET stock = stock - ?
+                WHERE id_producto = ?
+                """,
+                (int(item["quantity"]), item["product_id"]),
+            )
+    elif previous_status == "confirmed" and new_status != "confirmed":
+        for item in items:
+            connection.execute(
+                """
+                UPDATE producto
+                SET stock = stock + ?
+                WHERE id_producto = ?
+                """,
+                (int(item["quantity"]), item["product_id"]),
+            )
+
+    connection.execute(
+        "UPDATE orders SET status = ? WHERE id = ?",
+        (new_status, int(order_id)),
+    )
+    connection.commit()
+    return {
+        "id": order_row["id"],
+        "order_number": order_row["order_number"],
+        "previous_status": previous_status,
+        "status": new_status,
+    }

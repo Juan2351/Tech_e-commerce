@@ -1,0 +1,113 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Pedidos | LePetit Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-dashboard-container">
+    <div class="admin-page-header">
+        <div>
+            <h1>Gestión de Pedidos e Inventario</h1>
+            <p class="muted">Revisa las órdenes de compra, confirma despachos para descontar unidades en stock o cancela pedidos.</p>
+        </div>
+        <div class="admin-header-actions">
+            <a class="button {% if not status_filter %}button-hero{% else %}button-secondary{% endif %} button-sm"
+               href="{{ url_for('admin.orders_list') }}">
+                Todos ({{ order_counts.all }})
+            </a>
+            <a class="button {% if status_filter == 'pending_confirmation' %}button-hero{% else %}button-secondary{% endif %} button-sm"
+               href="{{ url_for('admin.orders_list', status='pending_confirmation') }}">
+                Pendientes ({{ order_counts.pending_confirmation }})
+            </a>
+            <a class="button {% if status_filter == 'confirmed' %}button-hero{% else %}button-secondary{% endif %} button-sm"
+               href="{{ url_for('admin.orders_list', status='confirmed') }}">
+                Confirmados ({{ order_counts.confirmed }})
+            </a>
+            <a class="button {% if status_filter == 'cancelled' %}button-hero{% else %}button-secondary{% endif %} button-sm"
+               href="{{ url_for('admin.orders_list', status='cancelled') }}">
+                Cancelados ({{ order_counts.cancelled }})
+            </a>
+        </div>
+    </div>
+
+    {% if orders %}
+    <div class="admin-panel">
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>N.º Pedido / Fecha</th>
+                        <th>Cliente / Contacto</th>
+                        <th>Productos Solicitados</th>
+                        <th>Total (COP)</th>
+                        <th>Estado Actual</th>
+                        <th>Actualizar Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>
+                            <strong>{{ order.order_number }}</strong>
+                            <span class="muted small d-block">{{ order.created_at[:16] }}</span>
+                        </td>
+                        <td>
+                            <strong>{{ order.customer_name }}</strong>
+                            {% if order.user_rol == 'vip' %}
+                                <span class="badge badge-warning">VIP</span>
+                            {% elif order.user_id %}
+                                <span class="badge badge-client-role">Registrado</span>
+                            {% else %}
+                                <span class="badge badge-cat">Invitado</span>
+                            {% endif %}
+                            <span class="muted small d-block">{{ order.phone }}{% if order.email %} · {{ order.email }}{% endif %}</span>
+                            <span class="muted small d-block">{{ order.delivery_address }}</span>
+                            {% if order.notes %}
+                                <span class="muted small d-block"><em>Nota: {{ order.notes }}</em></span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <ul style="margin: 0; padding-left: 1rem; font-size: 0.82rem;">
+                                {% for line in order.lines %}
+                                <li>
+                                    {{ line.quantity }}x {{ line.product_name[:42] }}{% if line.product_name|length > 42 %}...{% endif %}
+                                    <span class="muted">({{ line.line_total_cop|cop_amount }})</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>
+                            <strong>{{ order.total_cop|cop_amount }}</strong>
+                        </td>
+                        <td>
+                            {% if order.status == 'confirmed' %}
+                                <span class="badge badge-success">Confirmado</span>
+                            {% elif order.status == 'cancelled' %}
+                                <span class="badge badge-danger">Cancelado</span>
+                            {% else %}
+                                <span class="badge badge-warning">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="post"
+                                  action="{{ url_for('admin.order_update_status', order_id=order.id, status=status_filter) }}"
+                                  style="display: flex; gap: 0.45rem; align-items: center;">
+                                <select name="status" aria-label="Estado del pedido {{ order.order_number }}" style="min-height: 2.1rem; font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+                                    <option value="pending_confirmation" {% if order.status == 'pending_confirmation' %}selected{% endif %}>Pendiente</option>
+                                    <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>Confirmar (-Stock)</option>
+                                    <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Cancelar</option>
+                                </select>
+                                <button type="submit" class="button button-sm">Guardar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="admin-panel">
+        <p class="muted">No se encontraron pedidos registrados{% if status_filter %} con el filtro seleccionado{% endif %}.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
