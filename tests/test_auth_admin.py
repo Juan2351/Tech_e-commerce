@@ -162,6 +162,50 @@ class AuthAndAdminTests(unittest.TestCase):
         with self.client.session_transaction() as sess:
             self.assertNotIn("user", sess)
 
+    def test_admin_can_change_user_role_to_vip(self):
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from models.auth_model import get_user_by_id
+
+        with TemporaryDirectory() as temp_dir:
+            app = create_app({
+                "TESTING": True,
+                "SECRET_KEY": "test-secret",
+                "DATABASE_BACKEND": "sqlite",
+                "DATABASE_PATH": str(Path(temp_dir) / "role_test.sqlite3"),
+            })
+            client = app.test_client()
+            with app.app_context():
+                user = register_user(
+                    nombre="Mateo Cliente",
+                    email="mateo@lepetit.com",
+                    password="password123",
+                    role="cliente",
+                )
+                user_id = user["id"]
+                self.assertEqual(user["rol"], "cliente")
+
+            with client.session_transaction() as sess:
+                sess["user"] = {
+                    "id": 999,
+                    "nombre": "Admin",
+                    "email": "admin@lepetit.com",
+                    "role": "admin",
+                    "rol": "admin",
+                }
+
+            resp = client.post(
+                f"/admin/clientes/{user_id}/rol",
+                data={"rol": "vip"},
+                follow_redirects=True,
+            )
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(b"VIP", resp.data)
+
+            with app.app_context():
+                updated = get_user_by_id(user_id)
+                self.assertEqual(updated["rol"], "vip")
+
 
 if __name__ == "__main__":
     unittest.main()

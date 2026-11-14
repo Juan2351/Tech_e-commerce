@@ -16,7 +16,8 @@
                 <tr>
                     <th>Usuario</th>
                     <th>Correo Electrónico</th>
-                    <th>Rol de Acceso</th>
+                    <th>Rol Actual</th>
+                    <th>Cambiar Rol</th>
                     <th>Teléfono</th>
                     <th>Dirección de Entrega</th>
                     <th>Fecha de Registro</th>
@@ -35,9 +36,21 @@
                     </td>
                     <td>{{ user.email }}</td>
                     <td>
-                        <span class="badge {% if user_role == 'admin' %}badge-admin-role{% elif user_role == 'vip' %}badge-vip-role{% else %}badge-client-role{% endif %}">
+                        <span class="badge {% if user_role == 'admin' %}badge-admin-role{% elif user_role == 'vip' %}badge-warning{% else %}badge-client-role{% endif %}">
                             {{ user_role|upper }}
                         </span>
+                    </td>
+                    <td>
+                        <form method="post"
+                              action="{{ url_for('admin.client_update_role', user_id=user.id) }}"
+                              style="display: flex; gap: 0.45rem; align-items: center;">
+                            <select name="rol" aria-label="Rol para {{ user_name }}" style="min-height: 2.1rem; font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+                                <option value="cliente" {% if user_role == 'cliente' %}selected{% endif %}>CLIENTE</option>
+                                <option value="vip" {% if user_role == 'vip' %}selected{% endif %}>VIP (10% Dto.)</option>
+                                <option value="admin" {% if user_role == 'admin' %}selected{% endif %}>ADMIN</option>
+                            </select>
+                            <button type="submit" class="button button-sm">Guardar</button>
+                        </form>
                     </td>
                     <td>{{ user.telefono or 'No registrado' }}</td>
                     <td>{{ user.direccion_entrega or user.ciudad or 'Colombia' }}</td>

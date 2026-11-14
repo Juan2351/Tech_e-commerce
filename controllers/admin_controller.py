@@ -4,7 +4,7 @@ from flask import Blueprint, flash, redirect, render_template, request, session,
 
 from controllers.auth_controller import admin_required
 from models import catalog
-from models.auth_model import get_all_clients, get_all_users
+from models.auth_model import AuthError, get_all_clients, get_all_users, update_user_role
 from models.firebase_db import FirebaseDB
 
 admin = Blueprint("admin", __name__, url_prefix="/admin")
@@ -287,6 +287,28 @@ def categories_manage():
 def clients_list():
     users = get_all_users()
     return render_template("admin/clients.html", users=users)
+
+
+@admin.route("/clientes/<string:user_id>/rol", methods=["POST"])
+@admin_required
+def client_update_role(user_id: str):
+    new_role = request.form.get("rol", "").strip().lower()
+    try:
+        updated = update_user_role(user_id, new_role)
+        current_session_user = session.get("user")
+        if current_session_user and str(current_session_user.get("id")) == str(updated.get("id")):
+            current_session_user["rol"] = updated["rol"]
+            current_session_user["role"] = updated["rol"]
+            session.modified = True
+        flash(
+            f"Rol de '{updated['nombre_usuario']}' actualizado a '{updated['rol'].upper()}'.",
+            "success",
+        )
+    except AuthError as err:
+        flash(str(err), "error")
+    except Exception as err:
+        flash(f"Error al actualizar el rol: {err}", "error")
+    return redirect(url_for("admin.clients_list"))
 
 
 @admin.route("/pedidos")

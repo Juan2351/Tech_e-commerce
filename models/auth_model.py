@@ -340,3 +340,42 @@ def get_all_clients() -> List[Dict[str, Any]]:
         u for u in users
         if (u.get("rol") or u.get("role")) in ("cliente", "vip")
     ]
+
+
+def update_user_role(user_id: Any, new_role: str) -> Dict[str, Any]:
+    """Actualiza el rol de un usuario en SQLite o Firebase validando contra VALID_ROLES."""
+    rol_final = (new_role or "").strip().lower()
+    if rol_final not in VALID_ROLES:
+        raise AuthError(f"El rol debe ser uno de: {', '.join(VALID_ROLES)}.")
+
+    if _use_firebase():
+        user = FirebaseDB.get_user_by_id(str(user_id))
+        if not user:
+            raise AuthError("El usuario solicitado no existe.")
+        user["rol"] = rol_final
+        user["role"] = rol_final
+        FirebaseDB.save_user(user)
+        return user
+
+    with _sqlite_connection() as connection:
+        existing = connection.execute(
+            "SELECT id FROM usuarios WHERE id = ?",
+            (user_id,),
+        ).fetchone()
+        if not existing:
+            raise AuthError("El usuario solicitado no existe.")
+        connection.execute(
+            "UPDATE usuarios SET rol = ? WHERE id = ?",
+            (rol_final, user_id),
+        )
+        connection.commit()
+        row = connection.execute(
+            """
+            SELECT id, nombre_usuario, email, password_hash, rol,
+                   telefono, direccion_entrega, created_at
+            FROM usuarios
+            WHERE id = ?
+            """,
+            (user_id,),
+        ).fetchone()
+        return _row_to_user_dict(row)
