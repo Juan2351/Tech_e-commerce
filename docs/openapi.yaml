@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: LePetit API
-  version: 1.0.0
-  description: API REST para catálogo, carrito temporal, autenticación JWT y métricas administrativas de LePetit.
+  version: 1.1.0
+  description: API REST para catálogo, carrito aislado por usuario, descuentos VIP (10%), cupones promocionales por categoría, autenticación JWT con roles (admin, cliente, vip) y métricas administrativas de LePetit.
 servers:
   - url: /api/v1
     description: API del mismo servidor que aloja Swagger UI
@@ -239,6 +239,7 @@ components:
         access_token: { type: string }
         token_type: { type: string, enum: [Bearer] }
         expires_in: { type: integer, description: Segundos hasta la expiración }
+        role: { type: string, enum: [admin, cliente, vip], description: Rol asignado al usuario autenticado }
     AdminDashboard:
       type: object
       properties:
@@ -288,7 +289,10 @@ components:
               producto: { $ref: "#/components/schemas/Product" }
               cantidad: { type: integer }
               subtotal: { type: integer, description: Valor en COP }
-        total: { type: integer, description: Valor en COP }
+        subtotal: { type: integer, description: Subtotal bruto del carrito en COP antes de descuentos }
+        porcentaje_descuento: { type: integer, description: Porcentaje de descuento preferencial VIP (10 para rol vip, 0 para otros) }
+        descuento_vip: { type: integer, description: Valor descontado en COP por membresía VIP }
+        total: { type: integer, description: Valor neto a pagar en COP tras aplicar descuentos }
         moneda: { type: string, enum: [COP] }
     Error:
       type: object
