@@ -1,8 +1,10 @@
 from decimal import Decimal, InvalidOperation
+import secrets
 import sqlite3
 
 from flask import (
     Flask,
+    abort,
     jsonify,
     redirect,
     render_template,
@@ -57,6 +59,25 @@ def create_app(test_config=None):
     app.teardown_appcontext(close_db)
 
     @app.before_request
+    def protect_csrf_forms():
+        if request.method != "POST":
+            return None
+        if request.path.startswith("/api/") or request.path.startswith("/admin/analytics/"):
+            return None
+        csrf_enabled = app.config.get("CSRF_ENABLED", not app.config.get("TESTING", False))
+        submitted_token = request.form.get("csrf_token")
+        expected_token = session.get("_csrf_token", "")
+        if submitted_token is not None or csrf_enabled:
+            if (
+                not isinstance(submitted_token, str)
+                or not isinstance(expected_token, str)
+                or not expected_token
+                or not secrets.compare_digest(submitted_token, expected_token)
+            ):
+                abort(400, description="Token de seguridad CSRF inválido o vencido. Recarga la página e inténtalo de nuevo.")
+        return None
+
+    @app.before_request
     def protect_admin_analytics():
         if not request.path.startswith("/admin/analytics"):
             return None
@@ -85,9 +106,12 @@ def create_app(test_config=None):
     def inject_auth_context():
         from flask import session
         user = session.get("user")
+        if "_csrf_token" not in session:
+            session["_csrf_token"] = secrets.token_urlsafe(32)
         return {
             "current_user": user,
             "is_admin": user.get("role") == "admin" if user else False,
+            "csrf_token": session["_csrf_token"],
             "firebase_config": {
                 "apiKey": app.config.get("FIREBASE_API_KEY", ""),
                 "authDomain": app.config.get("FIREBASE_AUTH_DOMAIN", ""),

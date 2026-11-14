@@ -206,6 +206,26 @@ class AuthAndAdminTests(unittest.TestCase):
                 updated = get_user_by_id(user_id)
                 self.assertEqual(updated["rol"], "vip")
 
+    def test_csrf_protection_blocks_forged_post_when_enabled(self):
+        app = create_app({
+            "TESTING": True,
+            "CSRF_ENABLED": True,
+            "SECRET_KEY": "test-secret",
+            "DATABASE_BACKEND": "sqlite",
+        })
+        client = app.test_client()
+        # Sin token CSRF debe devolver 400
+        forged = client.post("/login", data={"email": "a@b.com", "password": "123456"})
+        self.assertEqual(forged.status_code, 400)
+
+        # Con un token CSRF inválido aunque exista en sesión debe devolver 400
+        client.get("/login")
+        invalid = client.post(
+            "/login",
+            data={"csrf_token": "wrong-token", "email": "a@b.com", "password": "123456"},
+        )
+        self.assertEqual(invalid.status_code, 400)
+
 
 if __name__ == "__main__":
     unittest.main()

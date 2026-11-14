@@ -90,6 +90,7 @@
                             <form method="post"
                                   action="{{ url_for('admin.order_update_status', order_id=order.id, status=status_filter) }}"
                                   style="display: flex; gap: 0.45rem; align-items: center;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                 <select name="status" aria-label="Estado del pedido {{ order.order_number }}" style="min-height: 2.1rem; font-size: 0.8rem; padding: 0.25rem 0.5rem;">
                                     <option value="pending_confirmation" {% if order.status == 'pending_confirmation' %}selected{% endif %}>Pendiente</option>
                                     <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>Confirmar (-Stock)</option>

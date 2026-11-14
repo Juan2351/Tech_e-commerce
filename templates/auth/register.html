@@ -14,6 +14,7 @@
         {% endif %}
 
         <form class="auth-form" method="post" action="{{ url_for('auth.register') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <label for="nombre">
                 <span>Nombre Completo <span class="required-asterisk" aria-hidden="true">*</span></span>
                 <input id="nombre" type="text" name="nombre" placeholder="Ej. Valentina Gómez" required maxlength="80">

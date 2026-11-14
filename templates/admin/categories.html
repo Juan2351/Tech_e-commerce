@@ -64,6 +64,7 @@
                             </button>
                             <form method="post" action="{{ url_for('admin.categories_manage') }}"
                                   onsubmit="return confirm('¿Confirmas eliminar la categoría \'{{ cat.nombre }}\'?');" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="id_main_cat" value="{{ cat.id_main_cat }}">
                                 <button type="submit" class="button-action button-danger">Eliminar</button>
@@ -87,6 +88,7 @@
                 Aplica un descuento porcentual (ej. <code>-15</code> para rebajar 15%) o un incremento (ej. <code>10</code> para subir 10%) a todos los productos de una categoría específica o de toda la tienda.
             </p>
             <form method="post" action="{{ url_for('admin.categories_manage') }}" style="display: grid; gap: 0.9rem;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="hidden" name="action" value="adjust_prices">
                 <label style="display: grid; gap: 0.35rem; font-size: 0.85rem;">
                     <span>Línea / Categoría objetivo <span class="required-asterisk">*</span></span>
@@ -111,6 +113,7 @@
                 <span class="badge badge-success">{{ coupons|length if coupons is defined else 0 }} activos/registrados</span>
             </div>
             <form method="post" action="{{ url_for('admin.categories_manage') }}" style="display: grid; grid-template-columns: 1fr 110px 1fr auto; gap: 0.6rem; align-items: end; margin-bottom: 1.25rem;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="hidden" name="action" value="coupon_save">
                 <label style="display: grid; gap: 0.25rem; font-size: 0.8rem;">
                     <span>Código <span class="required-asterisk">*</span></span>
@@ -159,11 +162,13 @@
                             </td>
                             <td style="text-align: right;">
                                 <form method="post" action="{{ url_for('admin.categories_manage') }}" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                     <input type="hidden" name="action" value="coupon_toggle">
                                     <input type="hidden" name="coupon_id" value="{{ cup.id }}">
                                     <button type="submit" class="button-action">{% if cup.activo %}Desactivar{% else %}Activar{% endif %}</button>
                                 </form>
                                 <form method="post" action="{{ url_for('admin.categories_manage') }}" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                     <input type="hidden" name="action" value="coupon_delete">
                                     <input type="hidden" name="coupon_id" value="{{ cup.id }}">
                                     <button type="submit" class="button-action button-danger">Eliminar</button>
@@ -192,6 +197,7 @@
             </button>
         </div>
         <form class="admin-modal-form" method="post" action="{{ url_for('admin.categories_manage') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <input type="hidden" name="action" value="create">
             <div class="admin-modal-body">
                 <label for="cat_create_nombre">
@@ -222,6 +228,7 @@
             </button>
         </div>
         <form class="admin-modal-form" method="post" action="{{ url_for('admin.categories_manage') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <input type="hidden" name="action" value="edit">
             <input type="hidden" id="edit_cat_id" name="id_main_cat" value="">
             <div class="admin-modal-body">

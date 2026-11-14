@@ -17,6 +17,7 @@
 
     <div class="admin-form-card">
         <form class="product-crud-form" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="form-row-two">
                 <label for="id_producto">
                     ID de Producto (Código único)

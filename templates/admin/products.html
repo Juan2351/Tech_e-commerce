@@ -69,6 +69,7 @@
                         <a class="button-action" href="{{ url_for('admin.product_edit', product_id=product.id_producto) }}">Editar</a>
                         <form method="post" action="{{ url_for('admin.product_delete', product_id=product.id_producto) }}"
                               onsubmit="return confirm('¿Confirmas la eliminación permanente de este producto?');" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                             <button type="submit" class="button-action button-danger">Eliminar</button>
                         </form>
                     </td>

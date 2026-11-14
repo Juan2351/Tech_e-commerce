@@ -47,12 +47,14 @@
             <div class="coupon-box" style="margin-top: 0.85rem; padding-top: 0.85rem; border-top: 1px solid var(--border-color);">
                 {% if coupon_code %}
                 <form method="post" action="{{ url_for('shop.apply_coupon') }}" style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <input type="hidden" name="action" value="remove">
                     <span style="font-size: 0.8rem; color: var(--success);">Cupón <strong>{{ coupon_code }}</strong> activo</span>
                     <button type="submit" class="button-secondary button-sm">Quitar cupón</button>
                 </form>
                 {% else %}
                 <form method="post" action="{{ url_for('shop.apply_coupon') }}" style="display: flex; gap: 0.45rem; align-items: center;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <input type="text" name="codigo" placeholder="Código de cupón (ej. LEPETIT10)" maxlength="30" aria-label="Código de cupón promocional" style="flex: 1; min-height: 2.2rem; font-size: 0.82rem;">
                     <button type="submit" class="button-secondary button-sm">Aplicar</button>
                 </form>
@@ -60,6 +62,7 @@
             </div>
         </div>
         <form class="checkout-card" action="{{ url_for('shop.create_order') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <input type="hidden" name="checkout_token" value="{{ checkout_token }}">
             <div class="checkout-card-heading">
                 <span class="section-subtitle">CASI LISTO</span>
