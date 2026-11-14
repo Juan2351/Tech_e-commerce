@@ -31,6 +31,20 @@ class AuthAndAdminTests(unittest.TestCase):
         self.assertIn(b'class="required-asterisk"', response.data)
         self.assertIn(b'data-password-toggle="password"', response.data)
         self.assertIn(b'data-password-toggle="confirm_password"', response.data)
+        self.assertIn(b"Beneficios de Cliente Registrado", response.data)
+        self.assertIn(b"Cliente VIP", response.data)
+
+    def test_home_page_renders_membership_and_vip_benefits(self):
+        with (
+            patch("controllers.shop_controller.catalog.fetch_categories", return_value=[]),
+            patch("controllers.shop_controller.catalog.fetch_top_products", return_value=[]),
+        ):
+            response = self.client.get("/")
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(b"Beneficios de Registrarte y Programa VIP", response.data)
+            self.assertIn(b"Cliente Registrado", response.data)
+            self.assertIn(b"Cliente VIP", response.data)
+            self.assertIn(b"10% de descuento", response.data)
 
     def test_admin_dashboard_requires_login(self):
         response = self.client.get("/admin/dashboard", follow_redirects=False)

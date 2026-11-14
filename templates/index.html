@@ -181,6 +181,82 @@
     </div>
 </section>
 
+<!-- 4.5. PROGRAMA DE MEMBRESÍAS: CLIENTE REGISTRADO VS. PROGRAMA VIP -->
+<section id="membresias" class="section-container membership-section" aria-labelledby="membership-heading">
+    <div class="section-header-row">
+        <div>
+            <p class="section-subtitle">PROGRAMA DE BENEFICIOS LEPETIT</p>
+            <h2 id="membership-heading">Beneficios de Registrarte y Programa VIP</h2>
+        </div>
+    </div>
+
+    <div class="membership-grid">
+        <article class="membership-card">
+            <div class="membership-card-header">
+                <span class="membership-tier-badge">Cuenta Gratuita</span>
+                <h3>Cliente Registrado</h3>
+                <p class="membership-subtitle">Todo lo que necesitas para comprar y hacer seguimiento a tus equipos con total comodidad.</p>
+            </div>
+            <ul class="membership-benefits-list">
+                <li>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span><strong>Carrito personal guardado:</strong> tus productos se conservan en tu sesión individual sin mezclarse con otros usuarios.</span>
+                </li>
+                <li>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span><strong>Checkout rápido:</strong> tus datos de contacto y dirección de entrega se autocompletan al finalizar cada compra.</span>
+                </li>
+                <li>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span><strong>Historial en Mis Pedidos:</strong> consulta el estado de tus órdenes, desglose de productos y soporte directo por WhatsApp.</span>
+                </li>
+            </ul>
+            <div class="membership-card-footer">
+                {% if not current_user %}
+                    <a class="button button-secondary" href="{{ url_for('auth.register') }}">Crear Cuenta Gratis</a>
+                {% else %}
+                    <span class="membership-active-tag">Beneficios activos en tu cuenta</span>
+                {% endif %}
+            </div>
+        </article>
+
+        <article class="membership-card membership-card-vip">
+            <div class="membership-card-header">
+                <span class="membership-tier-badge membership-tier-badge-vip">Nivel Preferencial · 10% Dto.</span>
+                <h3>Cliente VIP</h3>
+                <p class="membership-subtitle">Diseñado para compradores recurrentes, profesionales TI y empresas aliadas.</p>
+            </div>
+            <ul class="membership-benefits-list">
+                <li>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span><strong>10% de descuento automático:</strong> aplicado de forma inmediata en el carrito y checkout sobre todo el catálogo.</span>
+                </li>
+                <li>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span><strong>Prioridad de inventario y despacho:</strong> asignación preferencial en lanzamientos y lotes corporativos.</span>
+                </li>
+                <li>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span><strong>Asesoría técnica ejecutiva:</strong> atención prioritaria para cotizaciones y configuraciones a medida.</span>
+                </li>
+            </ul>
+            <div class="membership-how-to-vip">
+                <strong>¿Cómo obtener el nivel VIP?</strong>
+                <p>Regístrate como cliente normal y acumula 3 o más pedidos confirmados (o compras superiores a $2.000.000 COP), o solicita la activación empresarial con nuestro equipo administrador.</p>
+            </div>
+            <div class="membership-card-footer">
+                {% if current_user and current_user.rol == 'vip' %}
+                    <span class="membership-active-tag membership-active-tag-vip">Eres miembro VIP activo</span>
+                {% elif not current_user %}
+                    <a class="button button-hero" href="{{ url_for('auth.register') }}">Registrarme y Empezar</a>
+                {% else %}
+                    <a class="button button-secondary" href="#contacto">Solicitar Ascenso a VIP</a>
+                {% endif %}
+            </div>
+        </article>
+    </div>
+</section>
+
 <!-- 5. BANNER LLAMADO A LA ACCIÓN A LA TIENDA -->
 <section class="store-cta-banner">
     <div class="store-cta-content">
