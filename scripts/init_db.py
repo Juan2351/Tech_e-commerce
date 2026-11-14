@@ -74,6 +74,7 @@ def main():
             "subcategoria",
             "producto",
             "usuarios",
+            "cupones",
             "orders",
             "order_items",
         ]

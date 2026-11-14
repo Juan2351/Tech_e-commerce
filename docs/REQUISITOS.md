@@ -10,9 +10,10 @@ LePetit es una aplicación web de comercio electrónico de demostración para ex
 
 | Actor | Capacidades |
 |---|---|
-| Visitante | Consultar la página inicial y el catálogo, buscar y filtrar productos, abrir fichas de producto, y registrarse o iniciar sesión. |
-| Cliente autenticado | Usar las funciones de cliente, mantener un carrito de sesión y enviar un pedido para confirmación posterior. |
-| Administrador autenticado | Consultar métricas y gestionar productos, categorías y clientes desde el panel administrativo. |
+| Visitante | Consultar la página inicial, el apartado de beneficios VIP y el catálogo, buscar y filtrar productos, abrir fichas de producto, mantener un carrito aislado de invitado y registrarse o iniciar sesión. |
+| Cliente autenticado (`cliente`) | Mantener su propio carrito aislado de otros usuarios, autocompletar sus datos de entrega en el checkout, redimir cupones de descuento y consultar el historial y estado de sus compras en *Mis Pedidos* (`/mis-pedidos`). |
+| Cliente VIP (`vip`) | Todas las capacidades del cliente autenticado más un **10% de descuento preferencial automático** aplicado sobre el subtotal del carrito y prioridad en asignación de inventario. |
+| Administrador autenticado (`admin`) | Consultar métricas y analítica integral (categorías, stock, clientes, pedidos), gestionar productos, ajustar precios porcentualmente por categoría, administrar cupones promocionales, gestionar estados de pedidos (con descuento/reversión de stock) y cambiar roles de usuarios. |
 | Integración API | Consultar el catálogo y operar el carrito; usar autenticación JWT para las rutas que la requieren. |
 
 ## Requisitos funcionales observables
@@ -21,13 +22,19 @@ LePetit es una aplicación web de comercio electrónico de demostración para ex
 |---|---|
 | RF-01 | La aplicación debe mostrar una página inicial y un catálogo con búsqueda, filtros por categoría, ordenamiento y paginación. |
 | RF-02 | La ficha de producto debe mostrar la información disponible en el catálogo y puede incluir un visor 3D esquemático. Las especificaciones presentadas deben derivarse de los datos disponibles. |
-| RF-03 | El carrito debe permitir agregar, actualizar y retirar productos, validar cantidades y disponibilidad en el servidor, y calcular importes en COP. |
-| RF-04 | El checkout debe validar el formulario, registrar un pedido y su detalle con una captura de los productos y precios, y presentar el pedido como pendiente de confirmación. |
-| RF-05 | El registro público debe crear cuentas de cliente. La autenticación y los usuarios se gestionan mediante Firebase; las contraseñas se almacenan con hash, no en texto plano. |
-| RF-06 | El acceso al panel y a sus funciones administrativas debe restringirse por rol. El administrador puede consultar el panel y gestionar el inventario, las categorías y los clientes. |
-| RF-07 | La API versionada debe ofrecer operaciones de salud, catálogo, categorías y carrito, y publicar su contrato OpenAPI/Swagger. |
-| RF-08 | La API debe emitir tokens JWT para inicio de sesión y aplicar autorización de administrador a las operaciones protegidas. |
+| RF-03 | El carrito debe permitir agregar, actualizar y retirar productos, validar cantidades y disponibilidad en el servidor, calcular importes en COP y aislar los productos por usuario autenticado o sesión de invitado. |
+| RF-04 | El checkout debe autocompletar los datos del usuario autenticado, validar el formulario, registrar un pedido y su detalle con una captura de los productos, precios y descuentos aplicados, y presentar el pedido como pendiente de confirmación. |
+| RF-05 | El registro público debe crear cuentas de cliente en SQLite (o Firebase según configuración). Las contraseñas se almacenan con hash PBKDF2-SHA256 y los formularios deben indicar campos obligatorios (`*`) y permitir mostrar/ocultar la contraseña. |
+| RF-06 | El acceso al panel y a sus funciones administrativas debe restringirse por rol (`admin`). El administrador puede consultar el panel y gestionar el inventario, las categorías, los cupones, los pedidos y los roles de clientes. |
+| RF-07 | La API versionada debe ofrecer operaciones de salud, catálogo, categorías y carrito, y publicar su contrato OpenAPI/Swagger en `/api/docs`. |
+| RF-08 | La API debe emitir tokens JWT para inicio de sesión (incluyendo el rol `cliente`, `vip` o `admin`) y aplicar autorización de administrador a las operaciones protegidas. |
 | RF-09 | La interfaz debe ofrecer recursos gráficos locales de respaldo cuando imágenes externas no estén disponibles. |
+| RF-10 | El sistema debe aplicar automáticamente un 10% de descuento preferencial en el carrito y checkout a los usuarios autenticados con rol `vip`, y permitir la redención de cupones promocionales activos (globales o por categoría). |
+| RF-11 | Los clientes autenticados deben disponer de la vista `/mis-pedidos` para consultar su historial de órdenes, estado actual y productos comprados. |
+| RF-12 | El administrador debe poder gestionar el estado de los pedidos (`pending`, `confirmed`, `cancelled`), descontando atómicamente el stock al confirmar y revirtiéndolo al cancelar un pedido confirmado. |
+| RF-13 | El administrador debe poder aplicar ajustes porcentuales de precio por categoría principal y crear, activar/desactivar o eliminar cupones de descuento desde `/admin/categorias`. |
+| RF-14 | El tablero `/admin/analytics/` debe ofrecer navegación clara de retorno al panel y tienda, filtro por categoría y gráficas de inventario por categoría, valorización en COP, bajo stock, segmentación de clientes por rol y estado de pedidos. |
+| RF-15 | Todos los formularios HTML `POST` de autenticación, tienda y administración deben estar protegidos mediante validación de token CSRF. |
 
 ## Requisitos no funcionales observables
 

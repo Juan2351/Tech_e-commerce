@@ -7,8 +7,9 @@ LePetit es una tienda web de demostración para consultar un catálogo de produc
 - **Problema:** presentar un catálogo de comercio electrónico tecnológico consultable, interacción de compra y un panel de gestión administrativa sin mezclar la interfaz con las capas de datos ni exponer secretos de infraestructura.
 - **Objetivo:** exhibir productos, precios en pesos colombianos (COP), marcas, categorías, stock, permitir modificar un carrito de compras, autenticar usuarios y administrar inventario mediante un panel protegido.
 - **Usuarios y Roles:**
-  - **Visitante / Cliente:** navega por la Landing Page, explora la Tienda Oficial, filtra productos, gestiona el carrito de compras y puede registrarse o iniciar sesión.
-  - **Administrador:** accede al panel administrativo independiente (`/admin`) para gestionar productos (CRUD), categorías y clientes, además de visualizar métricas en tiempo real.
+  - **Visitante / Cliente (`cliente`):** navega por la Landing Page, explora la Tienda Oficial, filtra productos, gestiona su carrito de compras aislado, redime cupones promocionales, autocompleta el checkout y consulta su historial en *Mis Pedidos* (`/mis-pedidos`).
+  - **Cliente VIP (`vip`):** además de los beneficios de cliente registrado, recibe automáticamente un **10% de descuento preferencial** sobre el subtotal de su carrito y prioridad en asignación de inventario.
+  - **Administrador (`admin`):** accede al panel administrativo independiente (`/admin`) para gestionar productos (CRUD), categorías, ajustes porcentuales de precios por categoría, cupones de descuento, estados de pedidos (con descuento/reversión atómica de stock), roles de clientes y analítica interactiva (`/admin/analytics/`).
 - **Funcionalidades implementadas:**
   - Landing Page (`/`) con Hero corporativo, modelo esquemático 3D de bajo consumo, carrusel de categorías con SVG, carrusel de productos destacados y formulario de contacto.
   - Fichas de producto con visor 3D opcional, centrado responsive y piezas seleccionables que muestran especificaciones disponibles del catálogo sin inventar datos.
@@ -98,34 +99,39 @@ Tech_e-commerce/
 │   └── entities.py                # Modelo Product tipado e inmutable y serialización
 ├── templates/
 │   ├── base.html                  # Layout público maestro con navegación y pie de página
-│   ├── index.html                 # Landing Page corporativa (Hero, Carruseles y Contacto)
+│   ├── index.html                 # Landing Page corporativa (Hero, Beneficios VIP, Carruseles y Contacto)
 │   ├── shop.html                  # Tienda Oficial dedicada (Buscador, Filtros, Grilla, Paginación)
-│   ├── product_detail.html        # Ficha técnica detallada del producto
-│   ├── cart.html                  # Resumen del carrito y totales
+│   ├── product_detail.html        # Ficha técnica detallada del producto y visor 3D
+│   ├── cart.html                  # Resumen del carrito, cupones, descuento VIP y checkout
+│   ├── my_orders.html             # Historial y seguimiento de pedidos del cliente autenticado
 │   ├── error.html                 # Manejo visual de errores HTTP
 │   ├── auth/                      # Vistas de autenticación
-│   │   ├── login.html             # Formulario de inicio de sesión
-│   │   └── register.html          # Formulario de registro de clientes
+│   │   ├── login.html             # Formulario de inicio de sesión con botón mostrar/ocultar contraseña
+│   │   └── register.html          # Formulario de registro de clientes y programa VIP
 │   └── admin/                     # Panel Administrativo independiente con Sidebar Slider
 │       ├── base_admin.html        # Layout exclusivo del administrador
 │       ├── dashboard.html         # Panel de métricas e indicadores KPI
 │       ├── products.html          # Listado y gestión de inventario
 │       ├── product_form.html      # Creación y edición de productos
-│       ├── categories.html        # Gestión y CRUD de categorías
-│       └── clients.html           # Directorio y roles de clientes
+│       ├── categories.html        # Gestión de categorías, ajuste de precios por categoría y cupones
+│       ├── orders.html            # Gestión de pedidos y actualización de stock
+│       └── clients.html           # Directorio y cambio de roles de clientes (cliente, vip, admin)
 ├── static/
-│   ├── css/styles.css             # Estilos completos: diseño responsivo, dark mode, slider
-│   ├── js/app.js                  # Lógica frontend: carrito, carruseles, sidebar y carga del visor
+│   ├── css/styles.css             # Estilos de la Tienda Pública y componentes compartidos
+│   ├── css/admin.css              # Estilos exclusivos del Portal Administrativo
+│   ├── css/product-3d.css         # Estilos exclusivos del Visor e Inspector 3D
+│   ├── js/app.js                  # Lógica frontend: carrito, carruseles, ojito de contraseña y visor
 │   ├── js/product-3d.js           # Modelos Three.js ligeros por categoría
 │   ├── js/product-components.jsx  # Selector de componentes React con Bootstrap aislado
 │   ├── dist/                      # Módulos frontend compilados por Vite para Flask
 │   └── img/                       # Recursos gráficos locales y fotografías de respaldo
 ├── database/
-│   ├── schema.sql                 # Tablas, relaciones e índices SQLite
-│   ├── seed.sql                   # Taxonomía tecnológica de categorías
+│   ├── schema.sql                 # Tablas, relaciones e índices SQLite (productos, usuarios, cupones, pedidos)
+│   ├── seed.sql                   # Taxonomía tecnológica de categorías y cupones semilla
 │   ├── data/                      # Dataset CSV original con 3,718 productos
 │   └── queries.sql                # Consultas de verificación relacional
 ├── scripts/
+│   ├── init_db.py                 # Inicializa database/lepetit.sqlite3 con catálogo, usuarios y cupones
 │   ├── migrate_to_firebase.py     # Script de migración y población masiva a Firebase
 │   └── create_admin.py            # Creación del usuario administrador inicial
 ├── docs/
@@ -208,6 +214,10 @@ Fotografías recibidas: [diagrama E-R](Diagramas/00952644-87a4-4592-88a8-c89ece6
 | `categoria_principal` | `id_main_cat` | `nombre` único. Una categoría contiene subcategorías. |
 | `subcategoria` | `id_subcat` | `id_main_cat` FK y `nombre`; nombre único dentro de su categoría. |
 | `producto` | `id_producto` (`TEXT`) | Nombre del producto tecnológico, descripción, precio base en USD, calificación, reseñas, stock, enlaces e imagen, con claves foráneas a marca y subcategoría. |
+| `usuarios` | `id` | `nombre_usuario`, `email` único, `password_hash`, `rol` (`admin`, `cliente`, `vip`), `telefono`, `direccion_entrega` y `created_at`. |
+| `cupones` | `id` | `codigo` único (ej. `LEPETIT10`), `porcentaje_descuento`, `id_main_cat` opcional (FK a `categoria_principal`), `activo` y `created_at`. |
+| `orders` | `id` | `order_number` único, `user_id` opcional (FK a `usuarios`), datos de contacto/entrega, `status` (`pending`, `confirmed`, `cancelled`), `total_cop` y `created_at`. |
+| `order_items` | `id` | `order_id` (FK a `orders`), `id_producto` (FK a `producto`), `product_name`, `unit_price_cop`, `quantity` y `subtotal_cop`. |
 
 Relaciones: marca 1:N producto; categoría principal 1:N subcategoría; subcategoría 1:N producto. Las claves foráneas y restricciones de SQLite protegen la integridad; los índices sirven las búsquedas y relaciones principales. `seed.sql` contiene solo la taxonomía tecnológica existente en los datos, mientras que los productos se importan desde el CSV como única fuente verificable.
 
@@ -237,36 +247,168 @@ Cada producto conserva el campo `image_url` que viene en el CSV y la página int
 
 Las fotografías de Unsplash se sirven desde su CDN mediante URLs directas por identificador; el proyecto no llama a una API de imágenes ni necesita una clave. Son recursos ilustrativos por categoría y no una garantía de que la fotografía corresponda al SKU exacto. Las imágenes remotas requieren conexión a Internet; el SVG local permite mantener un respaldo cuando la red o los CDNs no están disponibles.
 
-## Instalación y ejecución en Windows
+## Guía de Instalación y Ejecución por Sistema Operativo (Windows, Linux y macOS)
 
-**No uses Live Server para abrir `index.html`.** Las vistas usan Jinja y los datos se cargan desde Flask; JavaScript se comunica con la API Flask y Flask ejecuta SQL contra SQLite. Al abrir el HTML estático no existen esas rutas ni la conexión a la base de datos.
+> **Importante:** **No uses Live Server** de VS Code para abrir `index.html`. Las vistas usan plantillas Jinja2 renderizadas por Flask y consultan SQLite desde el backend Python.
 
-Desde PowerShell, en la carpeta del proyecto:
+### 1. Requisitos previos (para todos los sistemas operativos)
+Antes de empezar, asegúrate de tener instalado:
+1. **Python 3.10 o superior** (con `pip` y `venv` incluidos).
+   - Verificar con: `python --version` o `python3 --version`
+2. **Node.js 18+ y npm** (opcional si solo ejecutas el servidor, porque `static/dist/` ya está compilado, pero requerido si deseas recompilar los componentes 3D o correr pruebas JS).
+   - Verificar con: `node --version` y `npm --version`
+3. **Git** para clonar el repositorio.
+
+---
+
+### 2. Instalación paso a paso según tu Sistema Operativo
+
+#### Opción A: Windows (PowerShell)
+
+Abre **PowerShell** en la carpeta donde quieras descargar el proyecto y ejecuta:
 
 ```powershell
-# Solo la primera vez, si todavía no existe .venv
-py -3 -m venv .venv
+# 1. Clonar el repositorio y entrar a la carpeta
+git clone https://github.com/Juan2351/Tech_e-commerce.git
+Set-Location .\Tech_e-commerce
 
-# Preparar Python y la configuración local
+# 2. Crear y activar el entorno virtual de Python
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+# (Si PowerShell bloquea Activate.ps1, puedes usar directamente .\.venv\Scripts\python.exe en los pasos siguientes)
+
+# 3. Instalar las dependencias de Python (requirements.txt)
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+# 4. Crear el archivo de configuración .env a partir de la plantilla
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 
-# Preparar y compilar el frontend (usar .cmd en PowerShell)
+# 5. Inicializar la base de datos SQLite (3,718 productos + usuarios + cupones)
+.\.venv\Scripts\python.exe scripts\init_db.py
+
+# 6. (Opcional) Instalar dependencias frontend y compilar el visor 3D
 npm.cmd install
 npm.cmd run build
-```
 
-Edita `.env` antes de usar la aplicación: reemplaza los secretos de ejemplo por valores aleatorios privados y configura el backend deseado. `DATABASE_BACKEND=sqlite` usa SQLite para el catálogo; las funciones de autenticación y gestión de usuarios siguen necesitando una conexión Firebase configurada. No publiques `.env` ni uses contraseñas de demostración en un entorno real.
-
-Ejecuta Flask; el esquema y, cuando se usa SQLite, la base se inicializan automáticamente:
-
-```powershell
+# 7. Iniciar el servidor Flask
 .\.venv\Scripts\python.exe app.py
 ```
 
-Abre `http://127.0.0.1:5000`. La primera carga de datos puede tardar unos segundos. Si la inicialización falla, la aplicación presenta un error `503`; revisa el backend configurado, la disponibilidad de Firebase cuando corresponda, la existencia del CSV y los permisos de escritura en `database/`.
+#### Opción B: Windows (Símbolo del sistema / CMD)
 
-La insignia superior llama a `GET /api/v1/salud`. El endpoint confirma desde Flask la disponibilidad del backend configurado. JavaScript no abre conexiones a las bases de datos directamente desde el navegador.
+```cmd
+git clone https://github.com/Juan2351/Tech_e-commerce.git
+cd Tech_e-commerce
+
+python -m venv .venv
+.venv\Scripts\activate.bat
+
+pip install --upgrade pip
+pip install -r requirements.txt
+
+if not exist .env copy .env.example .env
+python scripts\init_db.py
+
+npm install
+npm run build
+
+python app.py
+```
+
+#### Opción C: Linux (Ubuntu / Debian / Fedora / Arch)
+
+Abre tu terminal y ejecuta:
+
+```bash
+# 0. (Solo si no tienes python3-venv instalado en Ubuntu/Debian)
+sudo apt update && sudo apt install -y python3 python3-venv python3-pip nodejs npm
+
+# 1. Clonar el repositorio y entrar a la carpeta
+git clone https://github.com/Juan2351/Tech_e-commerce.git
+cd Tech_e-commerce
+
+# 2. Crear y activar el entorno virtual
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 3. Instalar las dependencias de Python
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# 4. Crear el archivo .env (viene preconfigurado con DATABASE_BACKEND=sqlite)
+cp -n .env.example .env
+
+# 5. Inicializar la base de datos SQLite local
+python scripts/init_db.py
+
+# 6. (Opcional) Compilar recursos frontend
+npm install
+npm run build
+
+# 7. Iniciar el servidor Flask
+python app.py
+```
+
+#### Opción D: macOS (Terminal zsh / bash)
+
+Abre **Terminal** y ejecuta:
+
+```bash
+# 1. Clonar el repositorio y entrar a la carpeta
+git clone https://github.com/Juan2351/Tech_e-commerce.git
+cd Tech_e-commerce
+
+# 2. Crear y activar el entorno virtual
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 3. Instalar las dependencias de Python
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# 4. Crear el archivo .env
+cp -n .env.example .env
+
+# 5. Inicializar la base de datos SQLite local
+python scripts/init_db.py
+
+# 6. (Opcional) Compilar recursos frontend
+npm install
+npm run build
+
+# 7. Iniciar el servidor Flask
+python app.py
+```
+
+---
+
+### 3. Acceso a la aplicación, cuentas de prueba y cupones
+
+Una vez ejecutado `python app.py`, abre tu navegador en **`http://127.0.0.1:5000`**:
+
+| Vista | URL local |
+|---|---|
+| Landing Page | `http://127.0.0.1:5000/` |
+| Tienda Oficial | `http://127.0.0.1:5000/tienda` |
+| Carrito y Checkout | `http://127.0.0.1:5000/carrito` |
+| Iniciar Sesión / Registro | `http://127.0.0.1:5000/login` / `http://127.0.0.1:5000/registro` |
+| Panel Administrativo | `http://127.0.0.1:5000/admin/dashboard` |
+| Analítica Interactiva (Dash) | `http://127.0.0.1:5000/admin/analytics/` |
+| Documentación Swagger API | `http://127.0.0.1:5000/api/docs` |
+
+#### Cuentas listas para probar (creadas por `scripts/init_db.py`)
+
+| Rol | Correo electrónico | Contraseña | Qué puedes probar con esta cuenta |
+|---|---|---|---|
+| **Administrador (`admin`)** | `admin@lepetit.com` | `admin123` | Acceso total a `/admin`: CRUD de productos, gestión de pedidos y stock, cambio de roles (`cliente`/`vip`/`admin`), ajuste de precios por categoría, cupones y analítica en `/admin/analytics/`. |
+| **Cliente VIP (`vip`)** | `vip@lepetit.com` | `vip123` | **10% de descuento automático** en el carrito, carrito aislado propio, autocompletado en checkout y vista `/mis-pedidos`. |
+| **Cliente Normal (`cliente`)** | `cliente@lepetit.com` | `cliente123` | Compras estándar, carrito aislado propio, uso de cupones promocionales, autocompletado en checkout y vista `/mis-pedidos`. |
+
+#### Cupones promocionales de prueba (para redimir en `/carrito`)
+* **`LEPETIT10`**: 10% de descuento en toda la tienda.
+* **`LAPTOPS15`**: 15% de descuento en productos de la categoría *Laptops y Computadores*.
+* **`SMART15`**: 15% de descuento en productos de la categoría *Smartphones y Celulares*.
 
 ### HTTPS local
 

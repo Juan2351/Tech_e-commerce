@@ -20,31 +20,41 @@ Tech_e-commerce/
 │
 ├── templates/                      # VISTA (Presentación e Interfaces de Usuario)
 │   ├── base.html                   # Layout público maestro (Landing, Tienda, Carrito)
-│   ├── index.html                  # Landing Page introductoria (Hero, Carruseles, Contacto)
+│   ├── index.html                  # Landing Page introductoria (Hero, Beneficios VIP, Carruseles, Contacto)
 │   ├── shop.html                   # Tienda Oficial dedicada (Buscador, Filtros, Grilla, Paginación)
-│   ├── product_detail.html         # Ficha técnica detallada de cada producto
-│   ├── cart.html                   # Carrito de compras y cálculo de subtotales
+│   ├── product_detail.html         # Ficha técnica detallada de cada producto y visor 3D
+│   ├── cart.html                   # Carrito de compras, cupones, descuento VIP y checkout autocompletado
+│   ├── my_orders.html              # Historial de pedidos del cliente autenticado
 │   ├── auth/                       # Vistas de Autenticación
-│   │   ├── login.html              # Formulario de inicio de sesión
-│   │   └── register.html           # Formulario de registro de clientes
+│   │   ├── login.html              # Formulario de inicio de sesión con selector mostrar/ocultar contraseña
+│   │   └── register.html           # Formulario de registro de clientes y programa de beneficios VIP
 │   └── admin/                      # Vistas del Panel Administrativo Independiente
 │       ├── base_admin.html         # Layout administrativo exclusivo con Sidebar Slider
 │       ├── dashboard.html          # Panel de métricas e indicadores KPI
 │       ├── products.html           # Inventario general con acciones de edición/eliminación
-│       ├── product_form.html       # Formulario para crear y editar productos en Firebase
-│       ├── categories.html         # Gestión y CRUD de categorías
-│       └── clients.html            # Gestión y listado de usuarios/clientes
+│       ├── product_form.html       # Formulario para crear y editar productos
+│       ├── categories.html         # Gestión de categorías, ajuste de precios por categoría y cupones
+│       ├── orders.html             # Gestión de pedidos y actualización atómica de stock
+│       └── clients.html            # Gestión de usuarios y cambio de roles (cliente, vip, admin)
+│
+├── static/
+│   ├── css/
+│   │   ├── styles.css              # Estilos de la Tienda Pública y componentes compartidos
+│   │   ├── admin.css               # Estilos exclusivos del Portal Administrativo
+│   │   └── product-3d.css          # Estilos exclusivos del Visor e Inspector 3D
 │
 ├── controllers/                    # CONTROLADOR (Rutas, Orquestación y Lógica Web)
-│   ├── shop_controller.py          # Rutas de Landing (/), Tienda (/tienda) y Contacto (/contacto)
-│   ├── auth_controller.py          # Autenticación (/login, /registro, /logout) y decoradores RBAC
+│   ├── shop_controller.py          # Rutas de Landing (/), Tienda (/tienda), Carrito, Cupones y Mis Pedidos
+│   ├── auth_controller.py          # Autenticación (/login, /registro, /logout), RBAC y aislamiento de carrito
 │   ├── admin_controller.py         # Módulo administrativo protegido (/admin/*)
+│   ├── admin_dash.py               # Analítica integral interactiva en Plotly Dash (/admin/analytics/)
 │   └── api_controller.py           # API REST JSON (/api/v1/*) para operaciones asíncronas
 │
 ├── configs/
-│   └── settings.py                 # Variables de entorno y configuración de Firebase
+│   └── settings.py                 # Variables de entorno y configuración de SQLite/Firebase
 │
 ├── scripts/
+│   ├── init_db.py                  # Inicialización completa de SQLite con catálogo, usuarios y cupones semilla
 │   └── migrate_to_firebase.py      # Script de migración y población masiva en Firebase
 │
 └── tests/                          # Pruebas automatizadas Python y JavaScript
@@ -133,17 +143,82 @@ El panel de administración (`/admin`) es un entorno aislado del portal de clien
 
 ---
 
-## 6. Verificación y Ejecución de Pruebas
+## 6. Bitácora Técnica: Qué se Hizo y Con Qué Finalidad
 
-Para ejecutar la aplicación localmente:
+Esta sección documenta las mejoras implementadas en el sistema, organizadas por área funcional, detallando **qué se construyó** y **cuál es su finalidad técnica y de negocio**.
+
+### 6.1. Modelo Relacional Unificado en SQLite y Roles de Usuario (`cliente`, `vip`, `admin`)
+* **¿Qué se hizo?**
+  * Se consolidó SQLite 3 (`database/lepetit.sqlite3`) como motor relacional principal autónomo, añadiendo la tabla `usuarios` con restricción `CHECK (rol IN ('admin', 'cliente', 'vip')) DEFAULT 'cliente'`, la relación `orders.user_id` y la tabla `cupones`.
+  * Se creó el script `scripts/init_db.py` que inicializa automáticamente las 3,718 referencias del CSV, las categorías, los 3 usuarios de prueba por rol y los cupones promocionales semilla.
+* **¿Con qué finalidad?**
+  * Permitir que cualquier integrante del equipo o evaluador ejecute el proyecto localmente en cualquier sistema operativo sin depender de credenciales externas en la nube, garantizando integridad referencial y soporte nativo para tres niveles de acceso (`cliente`, `vip` y `admin`).
+
+### 6.2. Programa de Beneficios VIP, Autocompletado de Checkout y Vista *Mis Pedidos*
+* **¿Qué se hizo?**
+  * **Descuento VIP automático:** En `services/cart_service.py`, cuando el usuario autenticado tiene rol `vip`, el carrito calcula y descuenta automáticamente un **10% preferencial** sobre el subtotal en COP.
+  * **Autocompletado de Checkout:** En `/carrito` (`controllers/shop_controller.py` y `templates/cart.html`), los campos de nombre, correo, teléfono y dirección se rellenan automáticamente con los datos del perfil del usuario autenticado.
+  * **Historial *Mis Pedidos* (`/mis-pedidos`):** Nueva vista (`templates/my_orders.html`) donde cada cliente consulta sus pedidos realizados, el estado actual (`Pendiente`, `Confirmado`, `Cancelado`) y el desglose de productos adquiridos.
+  * **Apartado informativo de Membresía:** Sección comparativa en la Landing Page (`templates/index.html`) y en Registro (`templates/auth/register.html`) explicando los beneficios de registrarse como Cliente Normal y cómo obtener el nivel VIP.
+* **¿Con qué finalidad?**
+  * Darle un valor comercial real y tangible al rol `vip`, reducir la fricción durante el proceso de compra al evitar que el usuario registrado tenga que digitar sus datos repetidamente, y ofrecer trazabilidad transparente después de cada compra.
+
+### 6.3. Aislamiento del Carrito por Usuario e Invitado y Mejoras de UI/UX
+* **¿Qué se hizo?**
+  * **Aislamiento de Carrito (`session["user_carts"]`):** Se particionó el almacenamiento del carrito en sesión usando la clave única del usuario autenticado (`user:<id>`) o `guest` para visitantes anónimos (`controllers/auth_controller.py`, `services/cart_service.py`). Al iniciar o cerrar sesión, cada cuenta conserva únicamente sus propios productos.
+  * **Legibilidad y Accesibilidad en Formularios y Catálogo:**
+    * Se eliminó la negrita excesiva en los títulos de productos y etiquetas de formularios (`static/css/styles.css`) para hacer la lectura más amena.
+    * Se añadieron asteriscos rojos (`*`) en todos los campos obligatorios de Login, Registro y Checkout.
+    * Se incorporó el botón interactivo del **ojito (mostrar/ocultar contraseña)** en los formularios de inicio de sesión y registro (`static/js/app.js`).
+    * Se corrigió el contraste del botón e icono de **Registro** en la barra de navegación superior para que sea claro y legible sobre fondos oscuros.
+* **¿Con qué finalidad?**
+  * Corregir el defecto donde un producto agregado desde una cuenta (ej. VIP) aparecía o se borraba en otra cuenta (ej. Cliente Normal) en el mismo navegador, y mejorar la usabilidad, estética y accesibilidad de los formularios.
+
+### 6.4. Gestión Administrativa de Pedidos, Roles, Precios por Categoría y Cupones
+* **¿Qué se hizo?**
+  * **Módulo de Pedidos (`/admin/pedidos`):** Vista administrativa (`templates/admin/orders.html`) que permite filtrar órdenes y cambiar su estado (`pending`, `confirmed`, `cancelled`). Al confirmar un pedido se descuenta atómicamente el stock de cada producto en SQLite; si se cancela un pedido previamente confirmado, el stock se revierte automáticamente.
+  * **Gestión de Roles en Clientes (`/admin/clientes`):** Selector directo para promover o cambiar el rol de cualquier usuario entre `cliente`, `vip` y `admin` (`POST /admin/clientes/<id>/rol`).
+  * **Ajuste Porcentual de Precios por Categoría y Cupones (`/admin/categorias`):**
+    * Herramienta para aplicar descuentos o incrementos porcentuales masivos (ej. `-10%`, `-15%`, `+5%`) a todos los productos de una categoría principal.
+    * CRUD completo de **Cupones de Descuento** (`cupones`) globales o restringidos a una categoría específica, redimibles por los clientes en `/carrito`.
+* **¿Con qué finalidad?**
+  * Cerrar el ciclo operativo entre las compras de los clientes y el inventario real de la tienda, y brindar al administrador herramientas comerciales ágiles para gestionar campañas de descuento, cupones promocionales y membresías VIP sin editar producto por producto.
+
+### 6.5. Tablero de Analítica Integral Interactiva (`/admin/analytics/`)
+* **¿Qué se hizo?**
+  * Se rediseñó la aplicación Plotly Dash (`controllers/admin_dash.py`) incorporando una barra superior de navegación con botones claros de salida (**`← Volver al Panel Admin`**, accesos a Productos, Categorías, Pedidos, Clientes y **`Salir a la Tienda`**).
+  * Se amplió el análisis más allá de productos destacados, añadiendo filtro interactivo por categoría y **6 visualizaciones**:
+    1. Unidades en stock vs. número de referencias por categoría.
+    2. Valorización del inventario en millones de COP por categoría.
+    3. Productos destacados con mayor disponibilidad.
+    4. Alertas de productos en bajo stock (`≤ 5` unidades) para reabastecimiento.
+    5. Segmentación de usuarios por rol (`Cliente`, `VIP`, `Admin`).
+    6. Distribución de pedidos por estado e ingresos confirmados, más tabla comparativa por categoría.
+* **¿Con qué finalidad?**
+  * Evitar que el administrador quede atrapado en la vista de analítica sin botón claro de retorno y proporcionar inteligencia de negocio completa sobre todas las dimensiones del e-commerce (categorías, inventario, clientes y ventas).
+
+### 6.6. Seguridad CSRF, Contrato OpenAPI y Modularización de Hojas de Estilo CSS
+* **¿Qué se hizo?**
+  * **Protección CSRF:** Validación centralizada de tokens `_csrf_token` en `app.py` para todas las peticiones `POST` de formularios en autenticación, tienda y administración.
+  * **Actualización de OpenAPI (`/api/docs`):** Documentación de los nuevos roles (`vip`), descuentos y rutas en `services/openapi_spec.py`.
+  * **Modularización CSS:** Se dividió el archivo monolítico `static/css/styles.css` (que superaba las 3,750 líneas) extrayendo los estilos exclusivos del panel administrativo a `static/css/admin.css` y los del visor 3D a `static/css/product-3d.css`, reduciendo más de 1,000 líneas del CSS principal.
+* **¿Con qué finalidad?**
+  * Proteger las operaciones de cambio de estado contra ataques *Cross-Site Request Forgery* (CSRF), mantener la documentación Swagger sincronizada con el código real y mejorar el rendimiento de carga y la mantenibilidad de los estilos.
+
+---
+
+## 7. Verificación y Ejecución de Pruebas
+
+Para inicializar o verificar la base de datos SQLite y ejecutar la aplicación localmente:
 ```bash
+python scripts/init_db.py
 python app.py
 ```
 La aplicación queda disponible en `http://127.0.0.1:5000`.
 
-Para ejecutar las pruebas automatizadas:
+Para ejecutar las pruebas automatizadas (52 pruebas de backend y suite frontend):
 ```bash
+python -m pytest -q
 python -m unittest discover tests
 npm test
 ```
-La cantidad de casos cambia con el proyecto. Consulta la salida del comando para conocer el resultado vigente.
