@@ -174,27 +174,37 @@ def list_categories():
 @api.get("/carrito")
 def get_cart():
     cart = session.get("cart", {})
-    items, total = cart_service.cart_summary(cart)
+    items, subtotal = cart_service.cart_summary(cart)
+    pricing = cart_service.calculate_cart_totals(subtotal, session.get("user"))
     session["cart"] = cart
+    rate = current_rate()
+    subtotal_cop = int(
+        (pricing["subtotal"] * rate).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    )
+    discount_cop = int(
+        (pricing["discount_amount"] * rate).quantize(
+            Decimal("1"), rounding=ROUND_HALF_UP
+        )
+    )
+    total_cop = subtotal_cop - discount_cop
     return jsonify({
         "data": {
             "items": [
                 {
-                    "producto": item["product"].to_dict(current_rate()),
+                    "producto": item["product"].to_dict(rate),
                     "cantidad": item["quantity"],
                     "subtotal": int(
-                        (item["subtotal"] * current_rate()).quantize(
+                        (item["subtotal"] * rate).quantize(
                             Decimal("1"), rounding=ROUND_HALF_UP
                         )
                     ),
                 }
                 for item in items
             ],
-            "total": int(
-                (total * current_rate()).quantize(
-                    Decimal("1"), rounding=ROUND_HALF_UP
-                )
-            ),
+            "subtotal": subtotal_cop,
+            "descuento_vip": discount_cop,
+            "porcentaje_descuento": pricing["discount_percent"],
+            "total": total_cop,
             "moneda": "COP",
         }
     })

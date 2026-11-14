@@ -29,6 +29,10 @@
     </div>
     <div class="cart-checkout-layout">
         <div class="cart-total">
+            {% if is_vip %}
+            <p class="vip-discount-summary">Subtotal: {{ subtotal|cop }}</p>
+            <p class="vip-discount-badge">Beneficio VIP ({{ discount_percent }}% dcto.): -{{ discount_amount|cop }}</p>
+            {% endif %}
             <p>Total del pedido</p>
             <strong>{{ total|cop }}</strong>
             <span>El total final se confirma con el equipo antes de pagar.</span>

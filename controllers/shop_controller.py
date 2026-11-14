@@ -18,8 +18,9 @@ from flask import (
 )
 
 from models import catalog
+from models.auth_model import get_vip_discount_rate
 from models.database import get_db
-from services.cart_service import cart_summary
+from services.cart_service import calculate_cart_totals, cart_summary
 
 shop = Blueprint("shop", __name__)
 PRODUCTS_PER_PAGE = 24
@@ -135,14 +136,19 @@ def cart():
     cart_data = session.get("cart", {})
     if not isinstance(cart_data, dict):
         cart_data = {}
-    items, total = cart_summary(cart_data)
+    items, subtotal = cart_summary(cart_data)
+    pricing = calculate_cart_totals(subtotal, session.get("user"))
     session["cart"] = cart_data
     if items and not session.get("checkout_token"):
         session["checkout_token"] = secrets.token_urlsafe(32)
     return render_template(
         "cart.html",
         items=items,
-        total=total,
+        subtotal=pricing["subtotal"],
+        discount_amount=pricing["discount_amount"],
+        discount_percent=pricing["discount_percent"],
+        is_vip=pricing["is_vip"],
+        total=pricing["total"],
         cart_count=cart_count(cart_data),
         checkout_token=session.get("checkout_token", ""),
     )
@@ -198,14 +204,20 @@ def create_order():
         return redirect(url_for("shop.cart"))
 
     rate = Decimal(str(current_app.config["USD_TO_COP_RATE"]))
+    discount_rate = get_vip_discount_rate(session.get("user"))
+    price_multiplier = Decimal("1.00") - discount_rate
     order_lines = []
     for item in items:
         product = item["product"]
         unit_price_cop = int(
-            (product.precio * rate).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+            (product.precio * rate * price_multiplier).quantize(
+                Decimal("1"), rounding=ROUND_HALF_UP
+            )
         )
         line_total_cop = int(
-            (item["subtotal"] * rate).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+            (item["subtotal"] * rate * price_multiplier).quantize(
+                Decimal("1"), rounding=ROUND_HALF_UP
+            )
         )
         order_lines.append((
             product.id_producto,

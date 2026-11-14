@@ -1,5 +1,6 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
+from models.auth_model import get_vip_discount_rate
 from models.catalog import fetch_product, fetch_products_by_ids
 
 
@@ -68,3 +69,18 @@ def cart_summary(cart):
             "subtotal": subtotal,
         })
     return items, total
+
+
+def calculate_cart_totals(subtotal: Decimal, user=None):
+    subtotal_dec = Decimal(str(subtotal))
+    discount_rate = get_vip_discount_rate(user)
+    discount_amount = subtotal_dec * discount_rate
+    final_total = subtotal_dec - discount_amount
+    return {
+        "subtotal": subtotal_dec,
+        "discount_rate": discount_rate,
+        "discount_percent": int(discount_rate * 100),
+        "discount_amount": discount_amount,
+        "total": final_total,
+        "is_vip": discount_rate > Decimal("0.00"),
+    }

@@ -136,6 +136,7 @@ class CartOrderTests(unittest.TestCase):
                 ("vip-checkout-token",),
             ).fetchone()
             self.assertEqual(order["user_id"], vip_user["id"])
+            self.assertEqual(order["total_cop"], 75600)
 
             db.execute("DELETE FROM usuarios WHERE id = ?", (vip_user["id"],))
             db.commit()
@@ -144,6 +145,21 @@ class CartOrderTests(unittest.TestCase):
                 "SELECT * FROM orders WHERE id = ?", (order["id"],)
             ).fetchone()
             self.assertIsNone(order_after_delete["user_id"])
+
+    def test_vip_cart_shows_preferential_discount(self):
+        with self.client.session_transaction() as current_session:
+            current_session["cart"] = {"LAP-ORDER-001": 2}
+            current_session["user"] = {
+                "id": 99,
+                "nombre": "Cliente VIP",
+                "email": "vip@example.com",
+                "role": "vip",
+                "rol": "vip",
+            }
+        response = self.client.get("/carrito")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Beneficio VIP (10% dcto.)", response.data)
+        self.assertIn(b"$ 75.600 COP", response.data)
 
     def test_checkout_rejects_missing_or_invalid_form_token(self):
         response = self.client.post("/pedidos", data={

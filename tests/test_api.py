@@ -145,6 +145,24 @@ class LePetitApiTests(unittest.TestCase):
         with self.client.session_transaction() as current_session:
             self.assertEqual(current_session["cart"], {})
 
+    def test_api_cart_applies_vip_discount_when_user_is_vip(self):
+        with self.client.session_transaction() as current_session:
+            current_session["cart"] = {"LAP-TEST-001": 1}
+            current_session["user"] = {
+                "id": 10,
+                "nombre": "VIP API",
+                "email": "vip@api.com",
+                "role": "vip",
+                "rol": "vip",
+            }
+        response = self.client.get("/api/v1/carrito")
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()["data"]
+        self.assertEqual(data["subtotal"], 335958)
+        self.assertEqual(data["porcentaje_descuento"], 10)
+        self.assertEqual(data["descuento_vip"], 33596)
+        self.assertEqual(data["total"], 302362)
+
     def test_update_of_product_not_already_in_cart_returns_404(self):
         response = self.client.patch(
             "/api/v1/carrito/productos/LAP-TEST-001", json={"quantity": 1}
