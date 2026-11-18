@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Políticas de Devolución y Garantía | LePetit{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb-nav" aria-label="Navegación de migas de pan">
+    <a href="{{ url_for('shop.home') }}">Inicio</a>
+    <span class="breadcrumb-separator">/</span>
+    <span class="breadcrumb-current">Políticas de Devolución y Garantía</span>
+</nav>
+
+<section class="policy-page-section" aria-labelledby="policy-main-title">
+    <div class="policy-hero-card">
+        <p class="section-subtitle">RESPALDO OFICIAL Y PROTECCIÓN AL CONSUMIDOR</p>
+        <h1 id="policy-main-title">Políticas de Devolución, Retracto y Garantía</h1>
+        <p class="policy-lead">
+            En LePetit garantizamos la originalidad y el funcionamiento de cada equipo tecnológico. A continuación encontrarás los plazos, requisitos y el paso a paso para solicitar un cambio, devolución o garantía oficial en Colombia.
+        </p>
+    </div>
+
+    <div class="policy-grid">
+        <article class="policy-card">
+            <div class="policy-icon-badge">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            </div>
+            <h2>1. Derecho de Retracto (5 días hábiles)</h2>
+            <p>
+                De acuerdo con el <strong>Artículo 47 de la Ley 1480 de 2011 (Estatuto del Consumidor en Colombia)</strong>, tienes hasta <strong>5 días hábiles</strong> contados a partir de la entrega del producto para ejercer el derecho de retracto y solicitar el reembolso o cambio.
+            </p>
+            <ul class="policy-list">
+                <li>El equipo debe devolverse en las mismas condiciones en que se recibió, sin señales de uso indebido ni daños físicos.</li>
+                <li>Debe conservar su caja original, sellos, manuales, cables, cargadores y accesorios completos.</li>
+                <li>En equipos de cómputo y smartphones, no deben haberse vinculado cuentas bloqueantes (iCloud, Google FRP o BitLocker).</li>
+            </ul>
+        </article>
+
+        <article class="policy-card">
+            <div class="policy-icon-badge">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h2>2. Garantía Oficial por Defectos de Fábrica (12 meses)</h2>
+            <p>
+                Todos los computadores, portátiles, smartphones, monitores y periféricos nuevos cuentan con <strong>12 meses de garantía directa</strong> por defectos de fabricación o fallas internas de hardware.
+            </p>
+            <ul class="policy-list">
+                <li><strong>Cambio inmediato (DOA):</strong> Si el equipo presenta una falla técnica de fábrica dentro de los primeros <strong>8 días calendario</strong> tras recibirlo, realizamos el cambio directo por una unidad nueva tras revisión técnica rápida.</li>
+                <li><strong>Servicio técnico autorizado:</strong> Pasados los primeros 8 días, el producto ingresa a diagnóstico técnico gratuito. Si la falla no es reparable, se procede con reposición del equipo o devolución del dinero.</li>
+            </ul>
+        </article>
+
+        <article class="policy-card">
+            <div class="policy-icon-badge">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <h2>3. Casos No Cubiertos por Garantía</h2>
+            <p>
+                La garantía legal no aplica cuando el daño provenga de factores externos ajenos a la fabricación:
+            </p>
+            <ul class="policy-list">
+                <li>Golpes, caídas, pantallas fracturadas, derrames de líquidos o humedad interna.</li>
+                <li>Cortocircuitos o sobrecargas eléctricas por uso de adaptadores no originales o ausencia de protección eléctrica.</li>
+                <li>Manipulación interna, ruptura de sellos de garantía o modificaciones de hardware/firmware por terceros no autorizados.</li>
+            </ul>
+        </article>
+
+        <article class="policy-card policy-card-highlight">
+            <div class="policy-icon-badge">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <h2>4. ¿Cómo solicitar una devolución o garantía?</h2>
+            <p>
+                El proceso es directo y sin trámites complicados. Solo sigue estos 3 pasos:
+            </p>
+            <ol class="policy-steps-list">
+                <li>
+                    <strong>Ubica tu número de pedido:</strong> encuéntralo en tu sección <a href="{{ url_for('shop.my_orders') }}">Mis Pedidos</a> o en tu comprobante (formato <code>LP-AAAAMMDD-XXXXXXXX</code>).
+                </li>
+                <li>
+                    <strong>Contáctanos por nuestro canal oficial:</strong> escríbenos por WhatsApp o correo indicando tu número de pedido, el motivo de la solicitud y adjuntando fotos o video corto del estado del equipo.
+                </li>
+                <li>
+                    <strong>Guía de recolección o entrega en sede:</strong> te asignaremos un número de caso en menos de 24 horas hábiles para coordinar el envío asegurado o la recepción en nuestra sede de Pereira.
+                </li>
+            </ol>
+            <div class="policy-actions">
+                <a class="button button-hero"
+                   href="https://wa.me/573145971304?text=Hola%20LePetit%2C%20deseo%20solicitar%20una%20devoluci%C3%B3n%20o%20garant%C3%ADa%20para%20mi%20pedido%20LP-"
+                   target="_blank" rel="noopener noreferrer">
+                    Solicitar por WhatsApp
+                </a>
+                <a class="button button-secondary" href="mailto:contacto@lepetit.com?subject=Solicitud%20de%20Devolucion%20o%20Garantia%20-%20Pedido%20LP-">
+                    Enviar Correo de Soporte
+                </a>
+                {% if current_user %}
+                <a class="button button-secondary" href="{{ url_for('shop.my_orders') }}">
+                    Ver Mis Pedidos
+                </a>
+                {% endif %}
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}

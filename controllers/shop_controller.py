@@ -481,3 +481,11 @@ def my_orders():
         orders=orders_data,
         cart_count=cart_count(get_session_cart(session)),
     )
+
+
+@shop.get("/politicas-devolucion")
+def return_policy():
+    return render_template(
+        "return_policy.html",
+        cart_count=cart_count(get_session_cart(session)),
+    )

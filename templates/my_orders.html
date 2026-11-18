@@ -7,7 +7,10 @@
             <span class="section-subtitle">HISTORIAL DE COMPRAS</span>
             <h1>Mis pedidos</h1>
         </div>
-        <a href="{{ url_for('shop.shop_view') }}">Seguir comprando</a>
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <a class="button button-secondary button-sm" href="{{ url_for('shop.return_policy') }}">Políticas de Devolución y Garantía</a>
+            <a href="{{ url_for('shop.shop_view') }}">Seguir comprando</a>
+        </div>
     </div>
 
     {% if orders %}

@@ -569,6 +569,11 @@ class CartOrderTests(unittest.TestCase):
             self.assertEqual(my_orders_resp.status_code, 200)
             self.assertIn(b"Laptop para pedido", my_orders_resp.data)
 
+            policy_resp = self.client.get("/politicas-devolucion")
+            self.assertEqual(policy_resp.status_code, 200)
+            self.assertIn(b"Derecho de Retracto", policy_resp.data)
+            self.assertIn(b"Ley 1480 de 2011", policy_resp.data)
+
 
 if __name__ == "__main__":
     unittest.main()
