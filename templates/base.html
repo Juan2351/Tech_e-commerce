@@ -35,7 +35,7 @@
                 <div class="nav-auth">
                     {% if current_user %}
                         {% if is_admin %}
-                            <a class="badge-admin" href="{{ url_for('admin.dashboard') }}">Panel Admin</a>
+                            <a class="button button-sm badge-admin" href="{{ url_for('admin.dashboard') }}">Panel Admin</a>
                         {% endif %}
                         <a href="{{ url_for('shop.my_orders') }}">Mis Pedidos</a>
                         <span class="user-greeting" title="{{ current_user.email }}">
