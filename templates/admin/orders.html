@@ -25,6 +25,10 @@
                href="{{ url_for('admin.orders_list', status='cancelled') }}">
                 Cancelados ({{ order_counts.cancelled }})
             </a>
+            <a class="button {% if status_filter == 'returns' %}button-hero{% else %}button-secondary{% endif %} button-sm"
+               href="{{ url_for('admin.orders_list', status='returns') }}">
+                Devoluciones / Garantías ({{ order_counts.returns|default(0) }})
+            </a>
         </div>
     </div>
 
@@ -98,6 +102,44 @@
                                 </select>
                                 <button type="submit" class="button button-sm">Guardar</button>
                             </form>
+
+                            {% set ret_status = order.return_status or 'none' %}
+                            {% if ret_status != 'none' %}
+                            <div style="margin-top: 0.75rem; padding: 0.65rem; border: 1px solid #bfdbfe; border-radius: 6px; background: #f8fafc; font-size: 0.78rem;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; margin-bottom: 0.35rem;">
+                                    <strong>
+                                        {% if order.return_type == 'retracto' %}Retracto (5 días){% else %}Garantía (12 meses){% endif %}
+                                    </strong>
+                                    {% if ret_status == 'requested' %}
+                                        <span class="badge badge-warning">Por evaluar</span>
+                                    {% elif ret_status == 'approved_return' %}
+                                        <span class="badge badge-success">Dev. Aprobada</span>
+                                    {% elif ret_status == 'approved_warranty' %}
+                                        <span class="badge badge-success">Garantía Aprobada</span>
+                                    {% elif ret_status == 'rejected' %}
+                                        <span class="badge badge-danger">Rechazada</span>
+                                    {% endif %}
+                                </div>
+                                <p style="margin: 0 0 0.45rem; color: #334155;">
+                                    <em>Motivo cliente:</em> "{{ order.return_reason }}"
+                                </p>
+                                <form method="post"
+                                      action="{{ url_for('admin.order_resolve_return', order_id=order.id, status=status_filter) }}"
+                                      style="display: grid; gap: 0.35rem;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                    <select name="decision" aria-label="Decisión sobre devolución {{ order.order_number }}" style="min-height: 2rem; font-size: 0.78rem; padding: 0.2rem 0.4rem;">
+                                        <option value="approved_return" {% if ret_status == 'approved_return' %}selected{% endif %}>Aprobar Devolución (+Reintegrar Stock)</option>
+                                        <option value="approved_warranty" {% if ret_status == 'approved_warranty' %}selected{% endif %}>Aprobar Garantía (Cambio / Soporte)</option>
+                                        <option value="rejected" {% if ret_status == 'rejected' %}selected{% endif %}>Rechazar Solicitud</option>
+                                    </select>
+                                    <input type="text" name="admin_note" maxlength="400"
+                                           value="{{ order.return_admin_note or '' }}"
+                                           placeholder="Respuesta/observación para el cliente..."
+                                           style="min-height: 2rem; font-size: 0.78rem; padding: 0.25rem 0.5rem;">
+                                    <button type="submit" class="button button-sm">Responder al Cliente</button>
+                                </form>
+                            </div>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

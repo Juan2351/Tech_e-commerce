@@ -371,7 +371,7 @@ def client_update_role(user_id: str):
 @admin_required
 def orders_list():
     status_filter = request.args.get("status", "").strip()
-    if status_filter not in catalog.VALID_ORDER_STATUSES:
+    if status_filter not in (*catalog.VALID_ORDER_STATUSES, "returns"):
         status_filter = ""
 
     all_orders = catalog.fetch_all_orders()
@@ -380,18 +380,48 @@ def orders_list():
         "pending_confirmation": sum(1 for o in all_orders if o["status"] == "pending_confirmation"),
         "confirmed": sum(1 for o in all_orders if o["status"] == "confirmed"),
         "cancelled": sum(1 for o in all_orders if o["status"] == "cancelled"),
+        "returns": sum(1 for o in all_orders if (o.get("return_status") or "none") != "none"),
     }
-    orders = (
-        [o for o in all_orders if o["status"] == status_filter]
-        if status_filter
-        else all_orders
-    )
+    if status_filter == "returns":
+        orders = [o for o in all_orders if (o.get("return_status") or "none") != "none"]
+    elif status_filter:
+        orders = [o for o in all_orders if o["status"] == status_filter]
+    else:
+        orders = all_orders
+
     return render_template(
         "admin/orders.html",
         orders=orders,
         status_filter=status_filter,
         order_counts=order_counts,
     )
+
+
+@admin.route("/pedidos/<int:order_id>/devolucion", methods=["POST"])
+@admin_required
+def order_resolve_return(order_id: int):
+    decision = request.form.get("decision", "").strip()
+    admin_note = request.form.get("admin_note", "").strip()
+    try:
+        result = catalog.resolve_order_return_request(
+            order_id=order_id,
+            decision=decision,
+            admin_note=admin_note,
+        )
+        decision_labels = {
+            "approved_return": "Devolución aprobada (pedido cancelado y stock reintegrado)",
+            "approved_warranty": "Garantía oficial aprobada",
+            "rejected": "Solicitud rechazada",
+        }
+        flash(
+            f"Pedido {result['order_number']}: {decision_labels.get(decision, decision)}.",
+            "success",
+        )
+    except ValueError as err:
+        flash(str(err), "error")
+    except Exception as err:
+        flash(f"Error al procesar la solicitud de devolución/garantía: {err}", "error")
+    return redirect(url_for("admin.orders_list", status=request.args.get("status", "")))
 
 
 @admin.route("/pedidos/<int:order_id>/estado", methods=["POST"])

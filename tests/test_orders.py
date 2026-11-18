@@ -574,6 +574,62 @@ class CartOrderTests(unittest.TestCase):
             self.assertIn(b"Derecho de Retracto", policy_resp.data)
             self.assertIn(b"Ley 1480 de 2011", policy_resp.data)
 
+            # 5. Cliente solicita devolución por Derecho de Retracto desde Mis Pedidos
+            with self.app.app_context():
+                order_row = get_db().execute(
+                    "SELECT id FROM orders WHERE user_id = ? ORDER BY id DESC LIMIT 1",
+                    (vip_user["id"],),
+                ).fetchone()
+                order_id = order_row["id"]
+
+            req_ret = self.client.post(
+                f"/mis-pedidos/{order_id}/devolucion",
+                data={
+                    "return_type": "retracto",
+                    "return_reason": "Caja sellada sin abrir, solicito retracto dentro de los 5 dias.",
+                },
+                follow_redirects=True,
+            )
+            self.assertEqual(req_ret.status_code, 200)
+            self.assertIn(b"En evaluaci\xc3\xb3n por el Administrador", req_ret.data)
+
+            # 6. Admin confirma primero el pedido y luego aprueba la devolución reintegrando el stock
+            with self.client.session_transaction() as sess:
+                sess["user"] = {
+                    "id": 1,
+                    "nombre": "Admin Test",
+                    "email": "admin@lepetit.com",
+                    "role": "admin",
+                    "rol": "admin",
+                }
+            admin_returns_page = self.client.get("/admin/pedidos?status=returns")
+            self.assertEqual(admin_returns_page.status_code, 200)
+            self.assertIn(b"Caja sellada sin abrir", admin_returns_page.data)
+
+            resolve_resp = self.client.post(
+                f"/admin/pedidos/{order_id}/devolucion",
+                data={
+                    "decision": "approved_return",
+                    "admin_note": "Equipo recibido sellado en sede Pereira. Reembolso aprobado.",
+                },
+                follow_redirects=True,
+            )
+            self.assertEqual(resolve_resp.status_code, 200)
+
+            # 7. El cliente ve en Mis Pedidos la respuesta del administrador y la aprobación
+            with self.client.session_transaction() as sess:
+                sess["user"] = {
+                    "id": vip_user["id"],
+                    "nombre": vip_user["nombre_usuario"],
+                    "email": vip_user["email"],
+                    "role": vip_user["rol"],
+                    "rol": vip_user["rol"],
+                }
+            final_my_orders = self.client.get("/mis-pedidos")
+            self.assertEqual(final_my_orders.status_code, 200)
+            self.assertIn(b"Devoluci\xc3\xb3n Aprobada", final_my_orders.data)
+            self.assertIn(b"Equipo recibido sellado en sede Pereira", final_my_orders.data)
+
 
 if __name__ == "__main__":
     unittest.main()

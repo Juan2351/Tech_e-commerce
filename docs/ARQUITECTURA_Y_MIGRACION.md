@@ -214,6 +214,17 @@ Esta sección documenta las mejoras implementadas en el sistema, organizadas por
 * **¿Con qué finalidad?**
   * Facilitar que el comprador identifique y filtre de inmediato qué artículos cuentan con inspección 3D interactiva, mejorar el confort visual de la portada y presentar formalmente al equipo desarrollador del proyecto universitario.
 
+### 6.8. Gestión Integral de Devoluciones, Derecho de Retracto y Garantía Oficial
+* **¿Qué se hizo?**
+  * **Página informativa (`/politicas-devolucion`):** Vista pública (`templates/return_policy.html`) enlazada en el Footer, fichas de producto, Carrito y *Mis Pedidos*, detallando el Derecho de Retracto (5 días hábiles según Ley 1480 de 2011) y la Garantía Oficial de 12 meses.
+  * **Solicitud desde el Cliente (`/mis-pedidos`):** En cada pedido activo, el cliente dispone del formulario desplegable **"Solicitar Devolución o Garantía"** (`POST /mis-pedidos/<id>/devolucion`) para elegir el tipo (*Retracto* o *Garantía*) y describir el motivo.
+  * **Evaluación y Decisión desde el Administrador (`/admin/pedidos`):** Se agregó el filtro **`Devoluciones / Garantías`** (`?status=returns`) y el panel de respuesta (`POST /admin/pedidos/<id>/devolucion`) donde el administrador evalúa el motivo del cliente, escribe la respuesta oficial y elige entre:
+    * **`Aprobar Devolución (+Reintegrar Stock)`**: cancela el pedido y reintegra automáticamente las unidades al inventario de `producto`.
+    * **`Aprobar Garantía (Cambio / Soporte)`**: aprueba el trámite técnico manteniendo trazabilidad.
+    * **`Rechazar Solicitud`**: registra la justificación técnica por la que no procede.
+* **¿Con qué finalidad?**
+  * Permitir que tanto el cliente como el administrador gestionen y consulten en tiempo real el estado y la decisión de cualquier devolución o garantía directamente desde la aplicación web, manteniendo sincronizado el stock del inventario.
+
 ---
 
 ## 7. Verificación y Ejecución de Pruebas

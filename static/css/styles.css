@@ -2612,6 +2612,90 @@ textarea:focus {
     font-size: 0.78rem;
 }
 
+.order-return-status-box {
+    margin-top: 1rem;
+    padding: 0.95rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid #bfdbfe;
+    background: #f8fafc;
+    display: grid;
+    gap: 0.45rem;
+    font-size: 0.84rem;
+}
+
+.return-box-approved_return,
+.return-box-approved_warranty {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+}
+
+.return-box-rejected {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+.order-return-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.order-return-reason,
+.order-return-admin-note {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.order-return-admin-note {
+    padding-top: 0.4rem;
+    border-top: 1px dashed var(--border-strong);
+    color: var(--text-primary);
+}
+
+.order-return-details {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.order-return-details summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.order-return-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.order-return-form {
+    margin-top: 0.85rem;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: #f8fafc;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.order-return-form label {
+    display: grid;
+    gap: 0.3rem;
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--text-primary);
+}
+
+.order-return-form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
 .order-next-steps {
     display: flex;
     flex-wrap: wrap;

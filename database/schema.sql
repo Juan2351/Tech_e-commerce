@@ -73,6 +73,11 @@ CREATE TABLE IF NOT EXISTS orders (
     delivery_address TEXT NOT NULL DEFAULT '',
     notes TEXT NOT NULL DEFAULT '',
     total_cop INTEGER NOT NULL CHECK (total_cop >= 0),
+    return_status TEXT NOT NULL DEFAULT 'none'
+        CHECK (return_status IN ('none', 'requested', 'approved_return', 'approved_warranty', 'rejected')),
+    return_type TEXT NOT NULL DEFAULT '',
+    return_reason TEXT NOT NULL DEFAULT '',
+    return_admin_note TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id)
         REFERENCES usuarios (id)

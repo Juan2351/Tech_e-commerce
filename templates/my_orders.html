@@ -48,6 +48,58 @@
                 Dirección de entrega: <strong>{{ entry.order.delivery_address }}</strong>
             </p>
             {% endif %}
+
+            {% set ret_status = entry.order.return_status or 'none' %}
+            {% set ret_type_label = 'Derecho de Retracto (5 días)' if entry.order.return_type == 'retracto' else 'Garantía Oficial (12 meses)' %}
+            {% if ret_status != 'none' %}
+            <div class="order-return-status-box return-box-{{ ret_status }}">
+                <div class="order-return-header">
+                    <strong>Solicitud de {{ ret_type_label }}</strong>
+                    {% if ret_status == 'requested' %}
+                        <span class="badge badge-warning">En evaluación por el Administrador</span>
+                    {% elif ret_status == 'approved_return' %}
+                        <span class="badge badge-success">Devolución Aprobada · Stock Reintegrado</span>
+                    {% elif ret_status == 'approved_warranty' %}
+                        <span class="badge badge-success">Garantía Oficial Aprobada</span>
+                    {% elif ret_status == 'rejected' %}
+                        <span class="badge badge-danger">Solicitud No Aprobada</span>
+                    {% endif %}
+                </div>
+                <p class="order-return-reason">
+                    <strong>Tu motivo registrado:</strong> {{ entry.order.return_reason }}
+                </p>
+                {% if entry.order.return_admin_note %}
+                <p class="order-return-admin-note">
+                    <strong>Respuesta del Administrador:</strong> {{ entry.order.return_admin_note }}
+                </p>
+                {% endif %}
+            </div>
+            {% elif entry.order.status != 'cancelled' %}
+            <details class="order-return-details">
+                <summary class="button button-secondary button-sm">
+                    Solicitar Devolución o Garantía
+                </summary>
+                <form class="order-return-form" method="post" action="{{ url_for('shop.request_order_return', order_id=entry.order.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label>
+                        <span>Tipo de solicitud <span class="required-asterisk">*</span></span>
+                        <select name="return_type" required>
+                            <option value="retracto">Derecho de Retracto (dentro de los primeros 5 días hábiles)</option>
+                            <option value="garantia">Garantía Oficial por Defecto de Fábrica (12 meses)</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Motivo o detalle del caso <span class="required-asterisk">*</span></span>
+                        <textarea name="return_reason" rows="2" minlength="5" maxlength="400" required
+                                  placeholder="Describe brevemente el motivo de la devolución o la falla técnica presentada..."></textarea>
+                    </label>
+                    <div class="order-return-form-actions">
+                        <button type="submit" class="button button-sm">Enviar solicitud al Administrador</button>
+                        <a href="{{ url_for('shop.return_policy') }}" class="muted small" style="text-decoration: underline;">Ver condiciones completas</a>
+                    </div>
+                </form>
+            </details>
+            {% endif %}
         </article>
         {% endfor %}
     </div>

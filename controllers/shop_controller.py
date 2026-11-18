@@ -444,7 +444,8 @@ def my_orders():
     orders_rows = connection.execute(
         """
         SELECT id, order_number, status, customer_name, phone, email,
-               delivery_address, notes, total_cop, created_at
+               delivery_address, notes, total_cop, created_at,
+               return_status, return_type, return_reason, return_admin_note
         FROM orders
         WHERE user_id = ?
         ORDER BY created_at DESC, id DESC
@@ -481,6 +482,35 @@ def my_orders():
         orders=orders_data,
         cart_count=cart_count(get_session_cart(session)),
     )
+
+
+@shop.post("/mis-pedidos/<int:order_id>/devolucion")
+@login_required
+def request_order_return(order_id: int):
+    user_session = session.get("user") or {}
+    user_id = user_session.get("id")
+    return_type = request.form.get("return_type", "").strip()
+    return_reason = request.form.get("return_reason", "").strip()
+    try:
+        result = catalog.submit_order_return_request(
+            order_id=order_id,
+            user_id=user_id,
+            return_type=return_type,
+            return_reason=return_reason,
+        )
+        tipo_label = (
+            "Derecho de Retracto"
+            if result["return_type"] == "retracto"
+            else "Garantía Oficial"
+        )
+        flash(
+            f"Solicitud de {tipo_label} registrada para el pedido {result['order_number']}. "
+            "Nuestro equipo administrador la evaluará y verás la respuesta aquí mismo.",
+            "success",
+        )
+    except ValueError as err:
+        flash(str(err), "error")
+    return redirect(url_for("shop.my_orders"))
 
 
 @shop.get("/politicas-devolucion")

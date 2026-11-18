@@ -354,22 +354,27 @@ def fetch_dashboard_stats() -> Dict[str, Any]:
 
 
 VALID_ORDER_STATUSES = ("pending_confirmation", "confirmed", "cancelled")
+VALID_RETURN_TYPES = ("retracto", "garantia")
+VALID_RETURN_DECISIONS = ("approved_return", "approved_warranty", "rejected")
 
 
 def fetch_all_orders(status_filter: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Obtiene el listado de pedidos con sus ítems y datos del usuario."""
+    """Obtiene el listado de pedidos con sus ítems, solicitudes de devolución y datos del usuario."""
     connection = get_db()
     sql = """
         SELECT
             o.id, o.user_id, o.order_number, o.status, o.customer_name,
             o.phone, o.email, o.delivery_address, o.notes,
             o.total_cop, o.created_at,
+            o.return_status, o.return_type, o.return_reason, o.return_admin_note,
             u.nombre_usuario AS user_nombre, u.rol AS user_rol
         FROM orders AS o
         LEFT JOIN usuarios AS u ON u.id = o.user_id
     """
     params: tuple = ()
-    if status_filter and status_filter in VALID_ORDER_STATUSES:
+    if status_filter == "returns":
+        sql += " WHERE o.return_status != 'none'"
+    elif status_filter and status_filter in VALID_ORDER_STATUSES:
         sql += " WHERE o.status = ?"
         params = (status_filter,)
     sql += " ORDER BY o.created_at DESC, o.id DESC"
@@ -466,6 +471,101 @@ def update_order_status(order_id: int, new_status: str) -> Dict[str, Any]:
         "order_number": order_row["order_number"],
         "previous_status": previous_status,
         "status": new_status,
+    }
+
+
+def submit_order_return_request(
+    order_id: int, user_id: int, return_type: str, return_reason: str
+) -> Dict[str, Any]:
+    """Registra una solicitud de devolución (retracto) o garantía desde la cuenta del cliente."""
+    clean_type = (return_type or "").strip().lower()
+    if clean_type not in VALID_RETURN_TYPES:
+        raise ValueError("Selecciona un tipo válido: Derecho de Retracto o Garantía.")
+
+    clean_reason = (return_reason or "").strip()
+    if len(clean_reason) < 5 or len(clean_reason) > 400:
+        raise ValueError(
+            "Describe el motivo de tu solicitud (entre 5 y 400 caracteres)."
+        )
+
+    connection = get_db()
+    order_row = connection.execute(
+        """
+        SELECT id, user_id, order_number, status, return_status
+        FROM orders
+        WHERE id = ? AND user_id = ?
+        """,
+        (int(order_id), int(user_id)),
+    ).fetchone()
+    if order_row is None:
+        raise ValueError("No se encontró el pedido asociado a tu cuenta.")
+    if order_row["status"] == "cancelled" and order_row["return_status"] == "none":
+        raise ValueError("No es posible solicitar devolución sobre un pedido cancelado.")
+
+    connection.execute(
+        """
+        UPDATE orders
+        SET return_status = 'requested',
+            return_type = ?,
+            return_reason = ?
+        WHERE id = ?
+        """,
+        (clean_type, clean_reason, int(order_id)),
+    )
+    connection.commit()
+    return {
+        "id": order_row["id"],
+        "order_number": order_row["order_number"],
+        "return_status": "requested",
+        "return_type": clean_type,
+        "return_reason": clean_reason,
+    }
+
+
+def resolve_order_return_request(
+    order_id: int, decision: str, admin_note: str = ""
+) -> Dict[str, Any]:
+    """
+    Evalúa y resuelve una solicitud de devolución/garantía desde el panel de administrador:
+    - 'approved_return': aprueba la devolución; si el pedido estaba 'confirmed', lo pasa a 'cancelled' y reintegra el stock.
+    - 'approved_warranty': aprueba la garantía (cambio o soporte técnico) manteniendo el pedido confirmado.
+    - 'rejected': rechaza la solicitud dejando constancia del motivo técnico.
+    """
+    clean_decision = (decision or "").strip().lower()
+    if clean_decision not in VALID_RETURN_DECISIONS:
+        raise ValueError("Decisión de devolución/garantía no válida.")
+
+    clean_note = (admin_note or "").strip()[:400]
+    connection = get_db()
+    order_row = connection.execute(
+        """
+        SELECT id, order_number, status, return_status, return_type
+        FROM orders
+        WHERE id = ?
+        """,
+        (int(order_id),),
+    ).fetchone()
+    if order_row is None:
+        raise ValueError("El pedido solicitado no existe.")
+
+    if clean_decision == "approved_return" and order_row["status"] == "confirmed":
+        update_order_status(int(order_id), "cancelled")
+
+    connection.execute(
+        """
+        UPDATE orders
+        SET return_status = ?,
+            return_admin_note = ?
+        WHERE id = ?
+        """,
+        (clean_decision, clean_note, int(order_id)),
+    )
+    connection.commit()
+    return {
+        "id": order_row["id"],
+        "order_number": order_row["order_number"],
+        "return_status": clean_decision,
+        "return_admin_note": clean_note,
     }
 
 

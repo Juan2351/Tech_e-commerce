@@ -177,6 +177,18 @@ def initialize_database(connection, schema_path, seed_path, csv_path):
                 ADD COLUMN user_id INTEGER REFERENCES usuarios (id) ON DELETE SET NULL
                 """
             )
+        if order_columns:
+            return_cols = {
+                "return_status": "TEXT NOT NULL DEFAULT 'none'",
+                "return_type": "TEXT NOT NULL DEFAULT ''",
+                "return_reason": "TEXT NOT NULL DEFAULT ''",
+                "return_admin_note": "TEXT NOT NULL DEFAULT ''",
+            }
+            for col_name, col_def in return_cols.items():
+                if col_name not in order_columns:
+                    connection.execute(
+                        f"ALTER TABLE orders ADD COLUMN {col_name} {col_def}"
+                    )
         schema = Path(schema_path).read_text(encoding="utf-8")
         connection.executescript(schema)
         seed = Path(seed_path).read_text(encoding="utf-8")
