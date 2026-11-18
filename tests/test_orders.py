@@ -480,6 +480,95 @@ class CartOrderTests(unittest.TestCase):
         self.assertIn(b"PROMOLAP15", apply_resp.data)
         self.assertIn(b"15% dcto.", apply_resp.data)
 
+    def test_complete_user_journey_e2e_flow(self):
+        from models.auth_model import register_user
+
+        with self.app.app_context():
+            vip_user = register_user(
+                nombre="Camila VIP",
+                email="camila_e2e@lepetit.com",
+                password="vip123password",
+                telefono="+57 314 597 1304",
+                ciudad="Galicia, Pereira, Risaralda",
+                role="vip",
+            )
+
+        # 1. Usuario visita la página principal y la tienda con filtro 3D
+        with (
+            patch(
+                "controllers.shop_controller.catalog.fetch_categories",
+                return_value=[],
+            ),
+            patch(
+                "controllers.shop_controller.catalog.fetch_top_products",
+                return_value=[self.product],
+            ),
+            patch(
+                "controllers.shop_controller.catalog.fetch_products",
+                return_value=[self.product],
+            ),
+            patch(
+                "controllers.shop_controller.catalog.fetch_product",
+                return_value=self.product,
+            ),
+            patch(
+                "services.cart_service.fetch_product",
+                return_value=self.product,
+            ),
+        ):
+            home_resp = self.client.get("/")
+            self.assertEqual(home_resp.status_code, 200)
+            self.assertIn(b"Ver Equipos con 3D", home_resp.data)
+
+            shop_resp = self.client.get("/tienda?only_3d=1")
+            self.assertEqual(shop_resp.status_code, 200)
+            self.assertIn(b"Laptop para pedido", shop_resp.data)
+
+            detail_resp = self.client.get("/productos/LAP-ORDER-001")
+            self.assertEqual(detail_resp.status_code, 200)
+            self.assertIn(b"Explorar componentes en 3D", detail_resp.data)
+
+            # 2. Inicia sesión como cliente VIP real y agrega producto al carrito vía API
+            login_resp = self.client.post(
+                "/login",
+                data={"email": vip_user["email"], "password": "vip123password"},
+                follow_redirects=True,
+            )
+            self.assertEqual(login_resp.status_code, 200)
+
+            add_resp = self.client.post(
+                "/api/v1/carrito/productos",
+                json={"product_id": "LAP-ORDER-001", "quantity": 1},
+            )
+            self.assertEqual(add_resp.status_code, 201)
+
+            # 3. Abre el carrito, verifica descuento VIP y obtiene token de checkout
+            cart_page = self.client.get("/carrito")
+            self.assertEqual(cart_page.status_code, 200)
+            self.assertIn(b"Beneficio VIP", cart_page.data)
+            with self.client.session_transaction() as sess:
+                checkout_token = sess["checkout_token"]
+
+            # 4. Completa el checkout y verifica la confirmación y vista Mis Pedidos
+            order_resp = self.client.post(
+                "/pedidos",
+                data={
+                    "checkout_token": checkout_token,
+                    "nombre": "Camila VIP",
+                    "correo": vip_user["email"],
+                    "telefono": "+57 314 597 1304",
+                    "direccion": "Galicia, Pereira, Risaralda",
+                    "notas": "Entrega prioritaria VIP",
+                },
+                follow_redirects=True,
+            )
+            self.assertEqual(order_resp.status_code, 200)
+            self.assertIn(b"LP-", order_resp.data)
+
+            my_orders_resp = self.client.get("/mis-pedidos")
+            self.assertEqual(my_orders_resp.status_code, 200)
+            self.assertIn(b"Laptop para pedido", my_orders_resp.data)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -95,7 +95,11 @@ def shop_view():
     sort = request.args.get("sort", "featured")
     if sort not in {"featured", "price_asc", "price_desc", "rating_desc"}:
         abort(400, description="El criterio de orden no es válido.")
+    only_3d = request.args.get("only_3d") == "1"
     all_products = catalog.fetch_products(category_id, subcategory_id, search, sort)
+    total_3d_products = sum(1 for item in all_products if item.has_3d_model)
+    if only_3d:
+        all_products = [item for item in all_products if item.has_3d_model]
     total_products = len(all_products)
     page = parse_optional_id(request.args.get("page"), "page") or 1
     total_pages = max(1, (total_products + PRODUCTS_PER_PAGE - 1) // PRODUCTS_PER_PAGE)
@@ -108,10 +112,12 @@ def shop_view():
         categories=categories,
         products=products,
         total_products=total_products,
+        total_3d_products=total_3d_products,
         category_id=category_id,
         subcategory_id=subcategory_id,
         search=search,
         sort=sort,
+        only_3d=only_3d,
         page=page,
         total_pages=total_pages,
         cart_count=cart_count(get_session_cart(session)),

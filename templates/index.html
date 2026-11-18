@@ -13,6 +13,7 @@
             </p>
             <div class="hero-actions">
                 <a class="button button-hero" href="{{ url_for('shop.shop_view') }}">Ir a la Tienda</a>
+                <a class="button button-secondary" href="{{ url_for('shop.shop_view', only_3d=1) }}">Ver Equipos con 3D</a>
                 <a class="button button-secondary" href="#destacados">Productos Populares</a>
             </div>
             <div class="hero-trust-badges">
@@ -121,6 +122,12 @@
             {% for product in top_products %}
             <article class="carousel-product-card">
                 <span class="badge-featured">Top Ventas</span>
+                {% if product.has_3d_model %}
+                <span class="badge-3d" title="Este producto cuenta con visor 3D interactivo de componentes">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    {{ product.model_3d_label }}
+                </span>
+                {% endif %}
                 <a class="carousel-product-img" href="{{ url_for('shop.product_detail', product_id=product.id_producto) }}">
                     <img src="{{ product.image_url or url_for('static', filename='img/product-placeholder.svg') }}"
                          alt="{{ product.nombre }}" data-product-category="{{ product.subcategoria }}" loading="lazy">
@@ -469,12 +476,109 @@
         </p>
         <div class="about-team">
             <h3>Conoce al equipo</h3>
-            <ul class="about-team-list">
-                <li>Cristopher Arboleda</li>
-                <li>Juan José Toro</li>
-                <li>Kevin Ospina Villada</li>
-                <li>Juan Pablo Ruiz</li>
-            </ul>
+            <p class="about-team-intro">
+                Nuestro equipo combina desarrollo backend, arquitectura de datos, interfaces interactivas 3D y experiencia de usuario.
+            </p>
+            <!--
+                INSTRUCCIONES PARA FOTOS Y BIOGRAFÍAS DEL EQUIPO:
+                1. Guarda las fotos en la carpeta: static/img/team/
+                   con estos nombres exactos (formato .jpg):
+                   - static/img/team/cristopher-arboleda.jpg
+                   - static/img/team/juan-jose-toro.jpg
+                   - static/img/team/kevin-ospina.jpg
+                   - static/img/team/juan-pablo-ruiz.jpg
+                   (Mientras no subas el .jpg, se mostrará automáticamente el avatar SVG de respaldo).
+                2. Edita el texto dentro de <p class="team-member-bio"> de cada tarjeta con la mini biografía de cada integrante.
+            -->
+            <div class="about-team-grid">
+                <article class="team-member-card">
+                    <div class="team-member-photo-wrapper">
+                        <img
+                            class="team-member-photo"
+                            src="{{ url_for('static', filename='img/team/cristopher-arboleda.jpg') }}"
+                             data-fallback-src="{{ url_for('static', filename='img/team/cristopher-arboleda.svg') }}"
+                            onerror="this.onerror=null;this.src=this.dataset.fallbackSrc;"
+                            alt="Foto de Cristopher Arboleda"
+                            width="96"
+                            height="96"
+                            loading="lazy"
+                        >
+                    </div>
+                    <div class="team-member-body">
+                        <h4>Cristopher Arboleda</h4>
+                        <span class="team-member-role">Ingeniería de Sistemas · Desarrollador</span>
+                        <p class="team-member-bio">
+                            Espacio para la mini biografía de Cristopher Arboleda: describe aquí tu enfoque en el proyecto, tecnologías favoritas y aportes principales en LePetit.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="team-member-card">
+                    <div class="team-member-photo-wrapper">
+                        <img
+                            class="team-member-photo"
+                            src="{{ url_for('static', filename='img/team/juan-jose-toro.jpg') }}"
+                            data-fallback-src="{{ url_for('static', filename='img/team/juan-jose-toro.svg') }}"
+                            onerror="this.onerror=null;this.src=this.dataset.fallbackSrc;"
+                            alt="Foto de Juan José Toro"
+                            width="96"
+                            height="96"
+                            loading="lazy"
+                        >
+                    </div>
+                    <div class="team-member-body">
+                        <h4>Juan José Toro</h4>
+                        <span class="team-member-role">Ingeniería de Sistemas · Desarrollador</span>
+                        <p class="team-member-bio">
+                            Espacio para la mini biografía de Juan José Toro: describe aquí tu enfoque en el proyecto, tecnologías favoritas y aportes principales en LePetit.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="team-member-card">
+                    <div class="team-member-photo-wrapper">
+                        <img
+                            class="team-member-photo"
+                            src="{{ url_for('static', filename='img/team/kevin-ospina.jpg') }}"
+                            data-fallback-src="{{ url_for('static', filename='img/team/kevin-ospina.svg') }}"
+                            onerror="this.onerror=null;this.src=this.dataset.fallbackSrc;"
+                            alt="Foto de Kevin Ospina Villada"
+                            width="96"
+                            height="96"
+                            loading="lazy"
+                        >
+                    </div>
+                    <div class="team-member-body">
+                        <h4>Kevin Ospina Villada</h4>
+                        <span class="team-member-role">Ingeniería de Sistemas · Desarrollador</span>
+                        <p class="team-member-bio">
+                            Espacio para la mini biografía de Kevin Ospina Villada: describe aquí tu enfoque en el proyecto, tecnologías favoritas y aportes principales en LePetit.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="team-member-card">
+                    <div class="team-member-photo-wrapper">
+                        <img
+                            class="team-member-photo"
+                            src="{{ url_for('static', filename='img/team/juan-pablo-ruiz.jpg') }}"
+                            data-fallback-src="{{ url_for('static', filename='img/team/juan-pablo-ruiz.svg') }}"
+                            onerror="this.onerror=null;this.src=this.dataset.fallbackSrc;"
+                            alt="Foto de Juan Pablo Ruiz"
+                            width="96"
+                            height="96"
+                            loading="lazy"
+                        >
+                    </div>
+                    <div class="team-member-body">
+                        <h4>Juan Pablo Ruiz</h4>
+                        <span class="team-member-role">Ingeniería de Sistemas · Desarrollador</span>
+                        <p class="team-member-bio">
+                            Espacio para la mini biografía de Juan Pablo Ruiz: describe aquí tu enfoque en el proyecto, tecnologías favoritas y aportes principales en LePetit.
+                        </p>
+                    </div>
+                </article>
+            </div>
         </div>
     </div>
 </section>

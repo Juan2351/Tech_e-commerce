@@ -7,7 +7,7 @@
     <span class="breadcrumb-separator">/</span>
     <a href="{{ url_for('shop.shop_view') }}">Tienda</a>
     <span class="breadcrumb-separator">/</span>
-    <a href="{{ url_for('shop.shop_view', category_id=product.id_categoria) }}">{{ product.categoria }}</a>
+    <a href="{{ url_for('shop.shop_view', category_id=product.id_main_cat) }}">{{ product.categoria }}</a>
     <span class="breadcrumb-separator">/</span>
     <span class="breadcrumb-current">{{ product.nombre[:35] }}{% if product.nombre|length > 35 %}...{% endif %}</span>
 </nav>
@@ -44,6 +44,12 @@
         <div class="product-tags-row">
             <span class="product-category">{{ product.categoria }} &middot; {{ product.subcategoria }}</span>
             <span class="product-brand-tag">{{ product.marca }}</span>
+            {% if product.has_3d_model %}
+            <span class="product-3d-availability-tag">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                Incluye {{ product.model_3d_label }}
+            </span>
+            {% endif %}
         </div>
 
         <h1 class="product-title">{{ product.nombre }}</h1>

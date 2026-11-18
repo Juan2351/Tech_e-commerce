@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Foto de Juan José Toro">
+  <defs>
+    <linearGradient id="bg-jt" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e0e7ff"/>
+      <stop offset="100%" stop-color="#c7d2fe"/>
+    </linearGradient>
+  </defs>
+  <circle cx="80" cy="80" r="80" fill="url(#bg-jt)"/>
+  <circle cx="80" cy="62" r="26" fill="#4338ca" opacity="0.22"/>
+  <path d="M34 138c8-24 26-38 46-38s38 14 46 38" fill="#4338ca" opacity="0.22"/>
+  <text x="80" y="92" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="700" fill="#3730a3">JT</text>
+</svg>

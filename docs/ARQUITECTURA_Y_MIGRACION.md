@@ -205,6 +205,15 @@ Esta sección documenta las mejoras implementadas en el sistema, organizadas por
 * **¿Con qué finalidad?**
   * Proteger las operaciones de cambio de estado contra ataques *Cross-Site Request Forgery* (CSRF), mantener la documentación Swagger sincronizada con el código real y mejorar el rendimiento de carga y la mantenibilidad de los estilos.
 
+### 6.7. Identificación de Productos con Visor 3D, Contraste Luminoso en Inicio y Perfiles del Equipo
+* **¿Qué se hizo?**
+  * **Claridad y filtro de productos con 3D (Pendiente 31):** Se añadieron las propiedades `has_3d_model`, `model_3d_type` y `model_3d_label` en `models/entities.py`, mostrando insignias claras (**`Portátil 3D`**, **`Smartphone / Tablet 3D`**, **`Monitor 3D`**, **`PC / Mini PC 3D`**, **`Audio 3D`**, **`Smartwatch 3D`**, **`Teclado 3D`**, **`Mouse 3D`**, **`Hub / Dock 3D`**, **`Almacenamiento 3D`**) en las tarjetas del Inicio y de la Tienda, además del filtro **`Solo con Visor 3D Interactivo`** (`/tienda?only_3d=1`).
+  * **Contraste visual de la Página Principal (Pendiente 27):** Se rediseñaron el Hero principal (`.landing-hero`) y el banner de llamado a la acción (`.store-cta-banner`) con una paleta clara y luminosa (`#ffffff` → `#eff6ff` → `#dbeafe`) y tipografía oscura de alto contraste (`#0f172a` / `#334155`), garantizando lectura cómoda en toda la portada.
+  * **Tarjetas de Equipo con Foto y Mini Biografía en *Quiénes somos* (Pendiente 28):** Se estructuró `.about-team-grid` en `templates/index.html` con tarjetas individuales para **Cristopher Arboleda**, **Juan José Toro**, **Kevin Ospina Villada** y **Juan Pablo Ruiz**, incluyendo espacio para mini biografía y carga automática de fotografías desde `static/img/team/` con avatar SVG de respaldo.
+  * **Validación del Flujo Completo de Usuario (Pendiente 34):** Se verificó de extremo a extremo el recorrido de usuario (Inicio → Filtro 3D en Tienda → Ficha de Producto y Visor 3D → Inicio de Sesión → Carrito y Beneficio VIP → Checkout → Confirmación → *Mis Pedidos*).
+* **¿Con qué finalidad?**
+  * Facilitar que el comprador identifique y filtre de inmediato qué artículos cuentan con inspección 3D interactiva, mejorar el confort visual de la portada y presentar formalmente al equipo desarrollador del proyecto universitario.
+
 ---
 
 ## 7. Verificación y Ejecución de Pruebas

@@ -67,6 +67,73 @@ class Product3dViewerTests(unittest.TestCase):
             response.data,
         )
         self.assertIn(b'data-product-name="Laptop de prueba"', response.data)
+        self.assertIn("Incluye Portátil 3D".encode("utf-8"), response.data)
+
+    def test_shop_3d_filter_and_badges_identify_3d_products(self):
+        non_3d_product = Product(
+            id_producto="ACC-TEST-002",
+            nombre="Cable organizador simple",
+            descripcion="Accesorio genérico",
+            precio=Decimal("9.99"),
+            rating=Decimal("4.2"),
+            reviews_count=4,
+            stock=10,
+            url="",
+            image_url="",
+            id_marca=1,
+            id_subcat=99,
+            marca="Genérico",
+            subcategoria="Cables y Organizadores",
+            categoria="Otros Accesorios",
+            id_main_cat=9,
+        )
+        self.assertTrue(self.product.has_3d_model)
+        self.assertEqual(self.product.model_3d_label, "Portátil 3D")
+        self.assertFalse(non_3d_product.has_3d_model)
+
+        with (
+            patch(
+                "controllers.shop_controller.catalog.fetch_categories",
+                return_value=[],
+            ),
+            patch(
+                "controllers.shop_controller.catalog.fetch_products",
+                return_value=[self.product, non_3d_product],
+            ),
+        ):
+            all_resp = self.client.get("/tienda")
+            filtered_resp = self.client.get("/tienda?only_3d=1")
+
+        self.assertEqual(all_resp.status_code, 200)
+        self.assertIn(b"1 con Visor 3D Interactivo", all_resp.data)
+        self.assertIn(b"Laptop de prueba", all_resp.data)
+        self.assertIn(b"Cable organizador simple", all_resp.data)
+
+        self.assertEqual(filtered_resp.status_code, 200)
+        self.assertIn(b"Laptop de prueba", filtered_resp.data)
+        self.assertNotIn(b"Cable organizador simple", filtered_resp.data)
+
+    def test_home_team_section_includes_photos_and_bio_spaces(self):
+        with (
+            patch(
+                "controllers.shop_controller.catalog.fetch_categories",
+                return_value=[],
+            ),
+            patch(
+                "controllers.shop_controller.catalog.fetch_top_products",
+                return_value=[self.product],
+            ),
+        ):
+            response = self.client.get("/")
+
+        html = response.data.decode("utf-8")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("about-team-grid", html)
+        self.assertIn("team-member-bio", html)
+        self.assertIn("/static/img/team/cristopher-arboleda.jpg", html)
+        self.assertIn("/static/img/team/juan-jose-toro.jpg", html)
+        self.assertIn("/static/img/team/kevin-ospina.jpg", html)
+        self.assertIn("/static/img/team/juan-pablo-ruiz.jpg", html)
 
 
 if __name__ == "__main__":

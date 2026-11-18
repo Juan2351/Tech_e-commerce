@@ -8,7 +8,24 @@
             <p class="section-subtitle">INVENTARIO DISPONIBLE</p>
             <h1 class="shop-main-title">Tienda Oficial</h1>
         </div>
-        <p class="catalog-count-pill">{{ total_products }} producto(s) en catálogo</p>
+        <div class="shop-heading-pills">
+            <p class="catalog-count-pill">{{ total_products }} producto(s) en catálogo</p>
+            <a class="catalog-3d-pill {% if only_3d %}active{% endif %}"
+               href="{{ url_for('shop.shop_view', q=search or None, category_id=category_id, sort=sort, only_3d=None if only_3d else 1) }}"
+               title="Filtrar equipos con modelo 3D interactivo de componentes">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                <span>{{ total_3d_products|default(total_products) }} con Visor 3D Interactivo</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="shop-3d-guide-banner" role="note" aria-label="Guía de productos con modelo 3D">
+        <div class="shop-3d-guide-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        </div>
+        <p>
+            <strong>¿Qué productos tienen Visor 3D?</strong> Todos los equipos con la insignia <strong>Vista 3D</strong> (Portátiles, Smartphones/Tablets, Monitores, PC/Mini PC, Audio, Smartwatches, Teclados, Mouse, Hubs y Almacenamiento) incluyen un modelo 3D interactivo por componentes dentro de su ficha.
+        </p>
     </div>
 
     <!-- FILTROS Y BÚSQUEDA -->
@@ -37,6 +54,13 @@
                 <option value="rating_desc" {% if sort == "rating_desc" %}selected{% endif %}>Mejor calificados</option>
             </select>
         </label>
+        <label>
+            Visor 3D
+            <select name="only_3d">
+                <option value="" {% if not only_3d %}selected{% endif %}>Todos los productos</option>
+                <option value="1" {% if only_3d %}selected{% endif %}>Solo con Visor 3D Interactivo</option>
+            </select>
+        </label>
         <div class="filter-buttons">
             <button type="submit">Aplicar filtros</button>
             <a class="button button-secondary" href="{{ url_for('shop.shop_view') }}">Limpiar</a>
@@ -49,6 +73,12 @@
         {% for product in products %}
         <article class="product-card">
             <a class="product-image" href="{{ url_for('shop.product_detail', product_id=product.id_producto) }}">
+                {% if product.has_3d_model %}
+                <span class="badge-3d" title="Incluye visor 3D interactivo de componentes">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    {{ product.model_3d_label }}
+                </span>
+                {% endif %}
                 <img src="{{ product.image_url or url_for('static', filename='img/product-placeholder.svg') }}"
                      alt="{{ product.nombre }}" data-product-category="{{ product.subcategoria }}" loading="lazy">
             </a>
@@ -74,12 +104,12 @@
     <nav class="pagination" aria-label="Paginación del catálogo">
         {% if page > 1 %}
         <a class="button button-secondary"
-           href="{{ url_for('shop.shop_view', q=search or None, category_id=category_id, sort=sort, page=page - 1) }}">Anterior</a>
+           href="{{ url_for('shop.shop_view', q=search or None, category_id=category_id, sort=sort, only_3d=1 if only_3d else None, page=page - 1) }}">Anterior</a>
         {% endif %}
         <span class="pagination-current">Página {{ page }} de {{ total_pages }}</span>
         {% if page < total_pages %}
         <a class="button button-secondary"
-           href="{{ url_for('shop.shop_view', q=search or None, category_id=category_id, sort=sort, page=page + 1) }}">Siguiente</a>
+           href="{{ url_for('shop.shop_view', q=search or None, category_id=category_id, sort=sort, only_3d=1 if only_3d else None, page=page + 1) }}">Siguiente</a>
         {% endif %}
     </nav>
     {% endif %}
