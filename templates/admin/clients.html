@@ -21,6 +21,7 @@
                     <th>Teléfono</th>
                     <th>Dirección de Entrega</th>
                     <th>Fecha de Registro</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -56,6 +57,22 @@
                     <td>{{ user.telefono or 'No registrado' }}</td>
                     <td>{{ user.direccion_entrega or user.ciudad or 'Colombia' }}</td>
                     <td>{{ user.created_at or 'Reciente' }}</td>
+                    <td>
+                        {% if current_user and current_user.id|string != user.id|string %}
+                        <form method="post"
+                              action="{{ url_for('admin.client_delete', user_id=user.id) }}"
+                              onsubmit="return confirm('¿Eliminar esta cuenta? Esta acción no se puede deshacer.');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <button type="submit" class="button button-sm button-secondary">Eliminar</button>
+                        </form>
+                        {% else %}
+                        <span class="muted">Cuenta actual</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="muted">No hay usuarios registrados.</td>
                 </tr>
                 {% endfor %}
             </tbody>

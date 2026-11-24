@@ -319,7 +319,12 @@ def get_all_users() -> List[Dict[str, Any]]:
     if _use_firebase():
         users = FirebaseDB.get_users()
         users.sort(key=lambda u: str(u.get("created_at", "")), reverse=True)
-        return users
+        public_users = []
+        for user in users:
+            public_user = dict(user)
+            public_user.pop("password_hash", None)
+            public_users.append(public_user)
+        return public_users
 
     with _sqlite_connection() as connection:
         rows = connection.execute(
@@ -330,7 +335,10 @@ def get_all_users() -> List[Dict[str, Any]]:
             ORDER BY created_at DESC, id DESC
             """
         ).fetchall()
-    return [_row_to_user_dict(row) for row in rows]
+    users = [_row_to_user_dict(row) for row in rows]
+    for user in users:
+        user.pop("password_hash", None)
+    return users
 
 
 def get_all_clients() -> List[Dict[str, Any]]:
@@ -352,6 +360,13 @@ def update_user_role(user_id: Any, new_role: str) -> Dict[str, Any]:
         user = FirebaseDB.get_user_by_id(str(user_id))
         if not user:
             raise AuthError("El usuario solicitado no existe.")
+        admin_count = sum(
+            1 for existing_user in FirebaseDB.get_users()
+            if (existing_user.get("rol") or existing_user.get("role")) == "admin"
+        )
+        current_role = user.get("rol") or user.get("role")
+        if current_role == "admin" and rol_final != "admin" and admin_count <= 1:
+            raise AuthError("No se puede cambiar el rol del único administrador.")
         user["rol"] = rol_final
         user["role"] = rol_final
         FirebaseDB.save_user(user)
@@ -359,11 +374,17 @@ def update_user_role(user_id: Any, new_role: str) -> Dict[str, Any]:
 
     with _sqlite_connection() as connection:
         existing = connection.execute(
-            "SELECT id FROM usuarios WHERE id = ?",
+            "SELECT id, rol FROM usuarios WHERE id = ?",
             (user_id,),
         ).fetchone()
         if not existing:
             raise AuthError("El usuario solicitado no existe.")
+        if existing["rol"] == "admin" and rol_final != "admin":
+            admin_count = connection.execute(
+                "SELECT COUNT(*) FROM usuarios WHERE rol = 'admin'"
+            ).fetchone()[0]
+            if admin_count <= 1:
+                raise AuthError("No se puede cambiar el rol del único administrador.")
         connection.execute(
             "UPDATE usuarios SET rol = ? WHERE id = ?",
             (rol_final, user_id),
@@ -379,3 +400,55 @@ def update_user_role(user_id: Any, new_role: str) -> Dict[str, Any]:
             (user_id,),
         ).fetchone()
         return _row_to_user_dict(row)
+
+
+def delete_user(user_id: Any) -> Dict[str, Any]:
+    """Elimina un usuario, sin permitir borrar el último administrador."""
+    if _use_firebase():
+        user = FirebaseDB.get_user_by_id(str(user_id))
+        if not user:
+            raise AuthError("El usuario solicitado no existe.")
+        current_role = user.get("rol") or user.get("role")
+        if current_role == "admin":
+            admin_count = sum(
+                1 for existing_user in FirebaseDB.get_users()
+                if (existing_user.get("rol") or existing_user.get("role")) == "admin"
+            )
+            if admin_count <= 1:
+                raise AuthError("No se puede eliminar el único administrador.")
+        FirebaseDB.delete_user(str(user_id))
+        user.pop("password_hash", None)
+        return user
+
+    with _sqlite_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT id, nombre_usuario, email, rol, telefono, direccion_entrega, created_at
+            FROM usuarios
+            WHERE id = ?
+            """,
+            (user_id,),
+        ).fetchone()
+        if not row:
+            raise AuthError("El usuario solicitado no existe.")
+        if row["rol"] == "admin":
+            admin_count = connection.execute(
+                "SELECT COUNT(*) FROM usuarios WHERE rol = 'admin'"
+            ).fetchone()[0]
+            if admin_count <= 1:
+                raise AuthError("No se puede eliminar el único administrador.")
+
+        connection.execute("DELETE FROM usuarios WHERE id = ?", (user_id,))
+        connection.commit()
+        return {
+            "id": row["id"],
+            "nombre_usuario": row["nombre_usuario"],
+            "nombre": row["nombre_usuario"],
+            "email": row["email"],
+            "rol": row["rol"],
+            "role": row["rol"],
+            "telefono": row["telefono"],
+            "direccion_entrega": row["direccion_entrega"],
+            "ciudad": row["direccion_entrega"],
+            "created_at": row["created_at"],
+        }

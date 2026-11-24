@@ -206,6 +206,72 @@ class AuthAndAdminTests(unittest.TestCase):
                 updated = get_user_by_id(user_id)
                 self.assertEqual(updated["rol"], "vip")
 
+    def test_admin_can_delete_user_but_not_self_or_last_admin(self):
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from models.auth_model import delete_user, get_all_users, get_user_by_id, update_user_role
+
+        with TemporaryDirectory() as temp_dir:
+            app = create_app({
+                "TESTING": True,
+                "SECRET_KEY": "test-secret",
+                "DATABASE_BACKEND": "sqlite",
+                "DATABASE_PATH": str(Path(temp_dir) / "delete_user_test.sqlite3"),
+            })
+            client = app.test_client()
+            with app.app_context():
+                admin_user = register_user(
+                    nombre="Admin Principal",
+                    email="admin@lepetit.com",
+                    password="password123",
+                    role="admin",
+                )
+                customer = register_user(
+                    nombre="Cliente Prueba",
+                    email="cliente@lepetit.com",
+                    password="password123",
+                )
+                customer_id = customer["id"]
+                self.assertNotIn("password_hash", next(
+                    user for user in get_all_users()
+                    if user["id"] == customer_id
+                ))
+                with self.assertRaises(AuthError):
+                    update_user_role(admin_user["id"], "cliente")
+
+            with client.session_transaction() as sess:
+                sess["user"] = {
+                    "id": admin_user["id"],
+                    "nombre": "Admin Principal",
+                    "email": "admin@lepetit.com",
+                    "role": "admin",
+                    "rol": "admin",
+                }
+
+            users_page = client.get("/admin/clientes")
+            self.assertEqual(users_page.status_code, 200)
+            self.assertIn(b"Admin Principal", users_page.data)
+            self.assertIn(b"cliente@lepetit.com", users_page.data)
+            self.assertNotIn(b"password_hash", users_page.data)
+
+            response = client.post(
+                f"/admin/clientes/{customer_id}/eliminar",
+                follow_redirects=True,
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(b"eliminado correctamente", response.data)
+            with app.app_context():
+                self.assertIsNone(get_user_by_id(customer_id))
+                with self.assertRaises(AuthError):
+                    delete_user(admin_user["id"])
+
+            self_delete = client.post(
+                f"/admin/clientes/{admin_user['id']}/eliminar",
+                follow_redirects=True,
+            )
+            self.assertEqual(self_delete.status_code, 200)
+            self.assertIn(b"No puedes eliminar tu propia cuenta", self_delete.data)
+
     def test_csrf_protection_blocks_forged_post_when_enabled(self):
         app = create_app({
             "TESTING": True,

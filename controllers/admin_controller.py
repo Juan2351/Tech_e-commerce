@@ -4,7 +4,7 @@ from flask import Blueprint, flash, redirect, render_template, request, session,
 
 from controllers.auth_controller import admin_required
 from models import catalog
-from models.auth_model import AuthError, get_all_clients, get_all_users, update_user_role
+from models.auth_model import AuthError, delete_user, get_all_clients, get_all_users, update_user_role
 from models.firebase_db import FirebaseDB
 
 admin = Blueprint("admin", __name__, url_prefix="/admin")
@@ -364,6 +364,24 @@ def client_update_role(user_id: str):
         flash(str(err), "error")
     except Exception as err:
         flash(f"Error al actualizar el rol: {err}", "error")
+    return redirect(url_for("admin.clients_list"))
+
+
+@admin.route("/clientes/<string:user_id>/eliminar", methods=["POST"])
+@admin_required
+def client_delete(user_id: str):
+    current_user = session.get("user") or {}
+    if str(current_user.get("id")) == str(user_id):
+        flash("No puedes eliminar tu propia cuenta de administrador.", "error")
+        return redirect(url_for("admin.clients_list"))
+
+    try:
+        deleted = delete_user(user_id)
+        flash(f"Usuario '{deleted['nombre_usuario']}' eliminado correctamente.", "success")
+    except AuthError as err:
+        flash(str(err), "error")
+    except Exception as err:
+        flash(f"Error al eliminar el usuario: {err}", "error")
     return redirect(url_for("admin.clients_list"))
 
 
